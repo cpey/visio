@@ -92,9 +92,13 @@ describe("layout device types", () => {
     const cams = resolveTiles(states, cfg, { domains: ["camera"] }).map((t) => t.entityId);
     expect(cams).toEqual(["camera.a", "camera.b", "camera.c"]);
   });
-  it("explicit entity lists still win over device types", () => {
-    const ids = resolveTiles(states, config(), { domains: ["cover"], entities: ["camera.a"] }).map((t) => t.entityId);
-    expect(ids).toEqual(["camera.a"]);
+  it("specific devices narrow within the chosen types", () => {
+    const pick = (layout: Parameters<typeof resolveTiles>[2]) =>
+      resolveTiles(states, config(), layout).map((t) => t.entityId);
+    expect(pick({ domains: ["camera"], entities: ["camera.a", "cover.blind"] })).toEqual(["camera.a"]);
+    expect(pick({ domains: ["cover"], entities: ["camera.a"] })).toEqual([]);
+    // No types chosen: the specific list is shown as is.
+    expect(pick({ entities: ["cover.blind", "camera.a"] })).toEqual(["cover.blind", "camera.a"]);
   });
   it("missing devices only count within the layout's types", () => {
     expect(missingFromLayout(states, { domains: ["camera"], entities: ["camera.a"] })).toEqual(["camera.b", "camera.c"]);

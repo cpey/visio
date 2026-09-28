@@ -318,7 +318,14 @@ export function Settings({ hass, config, onSave, onClose }: Props) {
                         onClick={() => {
                           const current = layout.domains ?? [];
                           const next = on ? current.filter((x) => x !== d) : [...current, d];
-                          setLayout(id, { domains: next.length ? next : undefined });
+                          // Removing a type also drops its specific devices.
+                          const entities = on
+                            ? layout.entities?.filter((eid) => domainOf(eid) !== d)
+                            : layout.entities;
+                          setLayout(id, {
+                            domains: next.length ? next : undefined,
+                            entities: entities?.length ? entities : undefined,
+                          });
                         }}
                       >
                         {DOMAINS[d]?.title ?? d}
@@ -329,10 +336,12 @@ export function Settings({ hass, config, onSave, onClose }: Props) {
               </div>
               <div className="field field--stack">
                 <span className="field__label">Specific devices (optional)</span>
-                <span className="hint">Ticking any device shows only the ticked ones and overrides device types.</span>
+                <span className="hint">
+                  None ticked shows all devices of the chosen types. Tick some to show only those.
+                </span>
                 <div className="checklist-groups">
                   {byDomain
-                    .filter(([, ids]) => ids.length)
+                    .filter(([d, ids]) => ids.length && (!layout.domains?.length || layout.domains.includes(d)))
                     .map(([d, ids]) => (
                       <fieldset key={d} className="checklist">
                         <legend>{DOMAINS[d]?.title ?? d}</legend>

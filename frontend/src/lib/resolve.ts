@@ -63,9 +63,12 @@ export function resolveTiles(
   includeHidden = false,
   deviceOf: Map<string, string> = new Map(),
 ): ResolvedTile[] {
-  const ids = layout.entities?.length
+  // Device types decide which kinds appear; a specific list narrows within them.
+  const types = layout.domains?.length ? layout.domains : null;
+  const ids = (layout.entities?.length
     ? layout.entities.filter((id) => id in states)
-    : discoverEntities(states, layout.domains);
+    : discoverEntities(states, layout.domains)
+  ).filter((id) => !types || types.includes(domainOf(id)));
 
   const tiles = ids
     .map((entityId, index) => {
