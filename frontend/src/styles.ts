@@ -157,6 +157,8 @@ code { color: var(--muted); font-size: .85em; }
 /* ---------- Sections & grid ---------- */
 .section { display: flex; flex-direction: column; gap: 12px; }
 .section__head { display: flex; align-items: center; gap: 12px 16px; min-height: 28px; flex-wrap: wrap; }
+/* e.g. Blinds view with no schedules: nothing to show in the head row */
+.section__head:empty { display: none; }
 .mode-control { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 .mode-control__hint { color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; }
 .segmented--compact { margin: 0; padding: 3px; }
