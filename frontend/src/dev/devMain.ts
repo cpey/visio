@@ -98,6 +98,8 @@ function makeHass(): Hass {
         case "visio/config/set":
           config = structuredClone(msg.config as VisioConfig);
           return structuredClone(config) as T;
+        case "visio/info":
+          return { version: "0.2.0-dev+ab4b01a" } as T;
         case "visio/updates/status":
           return {
             running: false,

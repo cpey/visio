@@ -73,6 +73,18 @@ async def ws_set_blind_mode(
     connection.send_result(msg["id"], config)
 
 
+@websocket_api.websocket_command({vol.Required("type"): "visio/info"})
+@callback
+def ws_info(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Installed Visio version (any authenticated user)."""
+    if DOMAIN not in hass.data:
+        connection.send_error(msg["id"], "not_loaded", "Visio is not set up")
+        return
+    connection.send_result(msg["id"], {"version": hass.data[DOMAIN]["version"]})
+
+
 @websocket_api.websocket_command({vol.Required("type"): "visio/updates/status"})
 @websocket_api.require_admin
 @callback
@@ -108,6 +120,7 @@ def ws_updates_run(
 
 @callback
 def async_register(hass: HomeAssistant) -> None:
+    websocket_api.async_register_command(hass, ws_info)
     websocket_api.async_register_command(hass, ws_updates_status)
     websocket_api.async_register_command(hass, ws_updates_run)
     websocket_api.async_register_command(hass, ws_get_config)

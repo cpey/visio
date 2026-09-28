@@ -146,6 +146,8 @@ code { color: var(--muted); font-size: .85em; }
 .drawer__item:hover { background: var(--surface-2); }
 .drawer__item--active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .drawer__item--active svg { color: var(--accent); }
+.drawer__version { display: flex; align-items: center; gap: 8px; padding: 0 10px; color: var(--faint); font-size: .78rem; font-variant-numeric: tabular-nums; }
+.drawer__version--dev { color: var(--motion); }
 .segmented { display: flex; gap: 4px; padding: 4px; margin: 0 4px; border-radius: 12px; background: var(--surface-2); }
 .segmented__option {
   flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px;

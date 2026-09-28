@@ -19,6 +19,8 @@ interface Props {
   items: MenuItem[];
   theme: Theme;
   onTheme(theme: Theme): void;
+  /** Installed Visio version; dev deploys look like "0.2.0-dev+ab4b01a". */
+  version?: string | null;
   notice?: string;
 }
 
@@ -38,6 +40,7 @@ export function Drawer({
   items,
   theme,
   onTheme,
+  version,
   notice,
 }: Props) {
   const panelRef = useRef<HTMLElement>(null);
@@ -134,6 +137,12 @@ export function Drawer({
             ),
           )}
         </div>
+        {version && (
+          <div className={`drawer__version${version.includes("-dev") ? " drawer__version--dev" : ""}`}>
+            Visio {version}
+            {version.includes("-dev") && <span className="badge badge--stale">dev build</span>}
+          </div>
+        )}
       </nav>
     </div>
   );

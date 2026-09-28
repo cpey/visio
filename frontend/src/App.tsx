@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { getConfig, setConfig } from "./api/config";
+import { getConfig, getVersion, setConfig } from "./api/config";
 import { fetchEntityDevices } from "./api/registry";
 import { usePullToRefresh } from "./lib/pull";
 import { missingFromLayout, pickLayout, resolveTiles } from "./lib/resolve";
@@ -30,6 +30,7 @@ export function App({ hass, menuItems = [], pageChrome = false }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<"grid" | "settings">("grid");
   const [deviceOf, setDeviceOf] = useState<Map<string, string>>(() => new Map());
+  const [version, setVersion] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   // Bumped on refresh: remounts the grid so every tile restarts its stream/polling.
   const [generation, setGeneration] = useState(0);
@@ -47,6 +48,7 @@ export function App({ hass, menuItems = [], pageChrome = false }: Props) {
 
   useEffect(() => {
     load().catch((err) => setError(err?.message ?? "Could not load Visio config"));
+    getVersion(hassRef.current).then(setVersion);
   }, [load]);
 
   const refresh = useCallback(async () => {
@@ -120,6 +122,7 @@ export function App({ hass, menuItems = [], pageChrome = false }: Props) {
           items={items}
           theme={theme}
           onTheme={setTheme}
+          version={version}
           notice={
             missing.length
               ? `${missing.length} device${missing.length > 1 ? "s" : ""} not in this layout: ${missing

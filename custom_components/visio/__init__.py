@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from pathlib import Path
 
 from homeassistant.components import frontend, panel_custom
@@ -34,6 +35,11 @@ WWW_DIR = Path(__file__).parent / "www"
 APP_DIR = WWW_DIR / "app"
 
 
+def _version() -> str:
+    """Installed version: release tag (from CI) or <tag>-dev+<sha> from deploy-dev.sh."""
+    return json.loads((Path(__file__).parent / "manifest.json").read_text()).get("version", "unknown")
+
+
 def _bundle_hash() -> str:
     """Content hash of the panel bundle, so every new build busts the browser cache."""
     try:
@@ -63,7 +69,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     updates = UpdateManager(hass, lambda: store.config)
     await updates.async_load()
     updates.async_start()
-    hass.data[DOMAIN] = {"store": store, "scheduler": scheduler, "updates": updates}
+    version = await hass.async_add_executor_job(_version)
+    hass.data[DOMAIN] = {"store": store, "scheduler": scheduler, "updates": updates, "version": version}
 
     bundle_hash = await hass.async_add_executor_job(_bundle_hash)
     await panel_custom.async_register_panel(
