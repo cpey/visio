@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getVersion } from "../api/config";
-import { getUpdatesStatus, runUpdates } from "../api/updates";
+import { checkForUpdates, getUpdatesStatus, runUpdates } from "../api/updates";
 import { DAYS, type Day, type Hass, type UpdateItem, type UpdatesConfig, type UpdatesStatus, type VisioConfig } from "../types";
 
 const DAY_LABELS: Record<Day, string> = {
@@ -31,6 +31,8 @@ export function SystemSettings({ hass, draft, setDraft }: Props) {
   const [reconnecting, setReconnecting] = useState(false);
   const [loadedVersion, setLoadedVersion] = useState<string | null>(null);
   const [newVersion, setNewVersion] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [checkProblems, setCheckProblems] = useState<string[]>([]);
   // Refs mirror the flags so a load() scheduled earlier still sees the current values.
   const restartRef = useRef(false);
   const reconnectingRef = useRef(false);
@@ -84,6 +86,21 @@ export function SystemSettings({ hass, draft, setDraft }: Props) {
     const id = setInterval(load, 5000);
     return () => clearInterval(id);
   }, [polling, load]);
+
+  const check = async () => {
+    setChecking(true);
+    setError(null);
+    try {
+      const result = await checkForUpdates(hass);
+      setStatus(result);
+      runningRef.current = result.running;
+      setCheckProblems(result.errors ?? []);
+    } catch (err) {
+      setError((err as Error)?.message ?? "Could not check for updates");
+    } finally {
+      setChecking(false);
+    }
+  };
 
   const set = (patch: Partial<UpdatesConfig>) => setDraft((d) => ({ ...d, updates: { ...DEFAULTS, ...d.updates, ...patch } }));
 
@@ -177,8 +194,8 @@ export function SystemSettings({ hass, draft, setDraft }: Props) {
       <div className="schedules__head">
         <h2 className="schedules__title">Available updates</h2>
         <div className="system__actions">
-          <button className="btn btn--ghost" onClick={load} disabled={busy}>
-            Check
+          <button className="btn btn--ghost" onClick={check} disabled={busy || checking}>
+            {checking ? "Checking…" : "Check for updates"}
           </button>
           <button className="btn" onClick={() => start()} disabled={busy || available.length === 0}>
             {busy ? "Updating…" : "Update all"}
@@ -197,6 +214,15 @@ export function SystemSettings({ hass, draft, setDraft }: Props) {
       {error && !reconnecting && <p className="schedules__paused">⚠ {error}</p>}
       {status?.pending && (
         <p className="schedules__paused">Waiting to continue after the restart: {status.pending.length} update(s).</p>
+      )}
+      {status?.last_check && (
+        <p className="hint">
+          Last checked {when(status.last_check)}
+          {checking ? " · checking again (this can take a minute)…" : ""}
+        </p>
+      )}
+      {checkProblems.length > 0 && (
+        <p className="schedules__paused">Some sources couldn't be checked: {checkProblems.join("; ")}</p>
       )}
       {status && available.length === 0 && <p className="hint">Everything is up to date.</p>}
       {available.map((item) => (

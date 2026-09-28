@@ -118,8 +118,24 @@ def ws_updates_run(
     connection.send_result(msg["id"], {"started": True})
 
 
+@websocket_api.websocket_command({vol.Required("type"): "visio/updates/check"})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_updates_check(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Look for new versions now (Supervisor + HACS), then return the fresh status."""
+    if DOMAIN not in hass.data:
+        connection.send_error(msg["id"], "not_loaded", "Visio is not set up")
+        return
+    updates = hass.data[DOMAIN]["updates"]
+    result = await updates.async_check()
+    connection.send_result(msg["id"], {**updates.status(), **result})
+
+
 @callback
 def async_register(hass: HomeAssistant) -> None:
+    websocket_api.async_register_command(hass, ws_updates_check)
     websocket_api.async_register_command(hass, ws_info)
     websocket_api.async_register_command(hass, ws_updates_status)
     websocket_api.async_register_command(hass, ws_updates_run)

@@ -111,7 +111,49 @@ class UpdateManager:
             "running": self._running,
             "pending": self._state.get("pending"),
             "history": self._state.get("history", []),
+            "last_check": self._state.get("last_check"),
         }
+
+    # ---------- check for new versions ----------
+
+    async def async_check(self) -> dict[str, Any]:
+        """Ask the sources to look for new versions now (instead of waiting for their timers).
+
+        Supervisor: OS, Core, add-ons (and the add-on store). HACS: each downloaded
+        repository re-checks GitHub. Then the update entities refresh their state.
+        """
+        errors: list[str] = []
+        try:
+            from homeassistant.components.hassio import get_supervisor_client
+
+            client = get_supervisor_client(self._hass)
+            await client.reload_updates()
+            await client.store.reload()
+        except Exception as err:  # noqa: BLE001 - optional component, report and go on
+            errors.append(f"Supervisor: {err}")
+
+        hacs = self._hass.data.get("hacs")
+        repositories = getattr(getattr(hacs, "repositories", None), "list_downloaded", None)
+        for repository in repositories or []:
+            try:
+                await repository.update_repository(ignore_issues=True, force=True)
+            except Exception as err:  # noqa: BLE001 - one repository failing shouldn't stop the rest
+                errors.append(f"{getattr(repository, 'string', 'HACS repository')}: {err}")
+
+        entity_ids = [s.entity_id for s in self._hass.states.async_all("update")]
+        if entity_ids:
+            try:
+                await self._hass.services.async_call(
+                    "homeassistant", "update_entity", {"entity_id": entity_ids}, blocking=True
+                )
+            except HomeAssistantError as err:
+                errors.append(f"Refresh: {err}")
+
+        self._state["last_check"] = dt_util.now().isoformat()
+        await self._store.async_save(self._state)
+        if errors:
+            _LOGGER.warning("Update check had problems: %s", errors)
+        return {"errors": errors}
 
     # ---------- triggers ----------
 

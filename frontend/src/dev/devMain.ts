@@ -121,6 +121,9 @@ function makeHass(): Hass {
               ] },
             ],
           } as T;
+        case "visio/updates/check":
+          await new Promise((r) => setTimeout(r, 1500));
+          return { ...(await makeHass().callWS<object>({ type: "visio/updates/status" })), last_check: new Date().toISOString(), errors: [] } as T;
         case "visio/updates/run":
           restartUntil = Date.now() + 8000;
           return { started: true } as T;

@@ -128,4 +128,5 @@ export interface UpdatesStatus {
   running: boolean;
   pending: string[] | null;
   history: UpdateRun[];
+  last_check?: string | null;
 }
