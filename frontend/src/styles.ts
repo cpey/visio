@@ -158,7 +158,6 @@ code { color: var(--muted); font-size: .85em; }
 .section { display: flex; flex-direction: column; gap: 12px; }
 .section__head { display: flex; align-items: center; gap: 12px 16px; min-height: 28px; flex-wrap: wrap; }
 .mode-control { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-.mode-control + .select-all { margin-left: 8px; }
 .mode-control__hint { color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; }
 .segmented--compact { margin: 0; padding: 3px; }
 .segmented--compact .segmented__option { padding: 6px 12px; font-size: .88rem; }
@@ -255,6 +254,8 @@ code { color: var(--muted); font-size: .85em; }
   display: grid; grid-template-columns: minmax(180px, auto) minmax(220px, 320px) minmax(220px, 1fr); align-items: center; gap: 18px;
 }
 @media (max-width: 800px) { .group-control { grid-template-columns: 1fr; gap: 12px; } }
+.group-control__select { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.group-control__select .select-all { margin-left: 0; color: var(--text); font-weight: 600; }
 .group-control__count { font-weight: 600; }
 .group-control .control__buttons .btn { background: var(--accent); color: var(--on-accent); font-weight: 600; }
 .group-control--idle .control__buttons .btn { background: var(--surface-2); color: var(--text); }

@@ -83,29 +83,26 @@ export function Grid({ hass, layout, tiles, refreshing, onRefresh, onOpenMenu, m
           const allChosen = chosen.length === sectionIds.length;
           return (
             <section key={domain} className="section">
-              {(all.length > 1 || GroupControl || SectionControl) && (
+              {(all.length > 1 || SectionControl) && (
                 <div className="section__head">
                   {all.length > 1 && <h2 className="section__title">{DOMAINS[domain]?.title ?? domain}</h2>}
                   {SectionControl && config && onConfig && (
                     <SectionControl hass={hass} config={config} onConfig={onConfig} />
                   )}
-                  {GroupControl && sectionIds.length > 1 && (
-                    <label className="select-all">
-                      <input
-                        type="checkbox"
-                        checked={allChosen}
-                        ref={(el) => {
-                          if (el) el.indeterminate = chosen.length > 0 && !allChosen;
-                        }}
-                        onChange={(e) => setSelection(sectionIds, e.target.checked)}
-                      />
-                      Select all
-                    </label>
-                  )}
                 </div>
               )}
               {/* Always rendered (disabled when empty) so the layout doesn't shift. */}
-              {GroupControl && sectionIds.length > 1 && <GroupControl hass={hass} entityIds={chosen} />}
+              {GroupControl && sectionIds.length > 1 && (
+                <GroupControl
+                  hass={hass}
+                  entityIds={chosen}
+                  selectAll={{
+                    checked: allChosen,
+                    indeterminate: chosen.length > 0 && !allChosen,
+                    onChange: (on) => setSelection(sectionIds, on),
+                  }}
+                />
+              )}
               <div
                 className={`grid${controls ? " grid--controls" : ""}`}
                 style={controls ? undefined : { gridTemplateColumns: `repeat(${layout.columns ?? 3}, minmax(0, 1fr))` }}

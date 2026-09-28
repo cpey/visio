@@ -9,7 +9,7 @@ const SEND_DELAY_MS = 400;
 const COMMAND_GAP_MS = 300;
 
 /** Open, close or position several covers, one command per cover. */
-export function CoverGroupControl({ hass, entityIds }: GroupControlProps) {
+export function CoverGroupControl({ hass, entityIds, selectAll }: GroupControlProps) {
   const [position, setPosition] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -51,10 +51,23 @@ export function CoverGroupControl({ hass, entityIds }: GroupControlProps) {
 
   return (
     <div className={`group-control${none ? " group-control--idle" : ""}`}>
-      <span className="group-control__count">
-        {none ? "Select blinds to control them together" : `${entityIds.length} selected${busy ? " · sending…" : ""}`}
-        {error ? ` · ⚠ ${error}` : ""}
-      </span>
+      <div className="group-control__select">
+        <label className="select-all">
+          <input
+            type="checkbox"
+            checked={selectAll.checked}
+            ref={(el) => {
+              if (el) el.indeterminate = selectAll.indeterminate;
+            }}
+            onChange={(e) => selectAll.onChange(e.target.checked)}
+          />
+          Select all
+        </label>
+        <span className="group-control__count">
+          {none ? "Select blinds to control them together" : `${entityIds.length} selected${busy ? " · sending…" : ""}`}
+          {error ? ` · ⚠ ${error}` : ""}
+        </span>
+      </div>
       <div className="control__buttons">
         <button className="btn" disabled={none || busy} onClick={() => run("open_cover", entityIds)}>
           Open all
