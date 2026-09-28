@@ -1,0 +1,26 @@
+# Project-local toolchains and environments
+.tools/
+.venv/
+.vm/
+
+# Frontend
+node_modules/
+dist/
+custom_components/visio/www/*.js
+custom_components/visio/www/*.js.map
+custom_components/visio/www/app/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Secrets
+.env
+secrets.yaml
+
+# Editor swap files
+*.swp
+
+# Claude Code personal settings
+.claude/settings.local.json

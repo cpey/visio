@@ -1,0 +1,14 @@
+{
+  "domain": "visio",
+  "name": "Visio",
+  "codeowners": ["@cpey"],
+  "issue_tracker": "https://github.com/cpey/visio/issues",
+  "config_flow": true,
+  "dependencies": ["http", "frontend", "panel_custom", "websocket_api"],
+  "documentation": "https://github.com/cpey/visio",
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "0.1.0"
+}

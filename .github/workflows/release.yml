@@ -1,0 +1,58 @@
+name: CI and release
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Frontend tests and build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run test
+          npm run build
+
+      - name: Python tests
+        run: |
+          python -m pip install -r requirements-dev.txt
+          python -m pytest -q tests/
+
+      - name: Stamp version from tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          jq --arg v "$version" '.version = $v' custom_components/visio/manifest.json > manifest.tmp
+          mv manifest.tmp custom_components/visio/manifest.json
+
+      # HACS zip_release: the zip contains the integration folder's contents at its root.
+      - name: Package
+        run: |
+          cd custom_components/visio
+          zip -r "$GITHUB_WORKSPACE/visio.zip" . -x '*/__pycache__/*' 'www/.gitkeep'
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: visio.zip
+          generate_release_notes: true

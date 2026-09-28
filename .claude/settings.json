@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npm ci)",
+      "Bash(npm install)",
+      "Bash(npm install --save-dev *)",
+      "Bash(npm install --save *)",
+      "Bash(npx vitest *)",
+      "Bash(npx tsc *)",
+      "Bash(.venv/bin/pip install *)",
+      "Bash(.venv/bin/pytest *)",
+      "Bash(python3 -m venv .venv)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ],
+    "ask": [
+      "Bash(sudo *)",
+      "Bash(apt *)",
+      "Bash(apt-get *)",
+      "Bash(dpkg *)",
+      "Bash(snap *)",
+      "Bash(npm install -g *)",
+      "Bash(npm i -g *)",
+      "Bash(pip install *)",
+      "Bash(pip3 install *)",
+      "Bash(pipx *)",
+      "Bash(systemctl *)",
+      "Bash(virsh *)",
+      "Bash(virt-install *)"
+    ],
+    "deny": [
+      "Bash(git push *)",
+      "Read(./**/.env)",
+      "Read(./**/secrets.yaml)"
+    ]
+  }
+}

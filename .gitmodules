@@ -1,0 +1,3 @@
+[submodule "docs/local"]
+	path = docs/local
+	url = git@github.com:cpey/visio-notes.git

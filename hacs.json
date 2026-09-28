@@ -1,0 +1,7 @@
+{
+  "name": "Visio",
+  "render_readme": true,
+  "zip_release": true,
+  "filename": "visio.zip",
+  "homeassistant": "2025.1.0"
+}

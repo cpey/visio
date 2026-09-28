@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Visio",
+        "description": "Add the Visio dashboard panel to the sidebar. Cameras are discovered automatically and configured from the panel's Settings view."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Visio is already configured."
+    }
+  }
+}
