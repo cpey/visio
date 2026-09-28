@@ -84,6 +84,23 @@ describe("resolveTiles", () => {
   });
 });
 
+describe("layout device types", () => {
+  it("shows only the chosen types, including new entities of that type", () => {
+    const cfg = config();
+    const ids = resolveTiles(states, cfg, { domains: ["cover"] }).map((t) => t.entityId);
+    expect(ids).toEqual(["cover.blind"]);
+    const cams = resolveTiles(states, cfg, { domains: ["camera"] }).map((t) => t.entityId);
+    expect(cams).toEqual(["camera.a", "camera.b", "camera.c"]);
+  });
+  it("explicit entity lists still win over device types", () => {
+    const ids = resolveTiles(states, config(), { domains: ["cover"], entities: ["camera.a"] }).map((t) => t.entityId);
+    expect(ids).toEqual(["camera.a"]);
+  });
+  it("missing devices only count within the layout's types", () => {
+    expect(missingFromLayout(states, { domains: ["camera"], entities: ["camera.a"] })).toEqual(["camera.b", "camera.c"]);
+  });
+});
+
 describe("missingFromLayout", () => {
   it("lists cameras left out of an explicit layout", () => {
     expect(missingFromLayout(states, config().layouts.tv)).toEqual(["camera.b", "cover.blind"]);

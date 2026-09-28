@@ -58,7 +58,7 @@ let config: VisioConfig = {
     "camera.garden": { interval: 3, motion_entity: "binary_sensor.garden_motion", order: 2 },
     "camera.backyard": { mode: "placeholder", placeholder_text: "View in Aosu app" },
   },
-  layouts: { default: { name: "Home", columns: 2 } },
+  layouts: { default: { name: "Cameras", columns: 2, domains: ["camera"] }, blinds: { name: "Blinds", domains: ["cover"] } },
   blinds: {
     mode: "auto",
     schedules: [

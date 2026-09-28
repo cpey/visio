@@ -28,7 +28,10 @@ def test_full_profile_roundtrip():
             },
             "cover.blind": {"hide_tilt": True},
         },
-        "layouts": {"tv": {"name": "TV", "columns": 2, "show_clock": True}},
+        "layouts": {
+            "tv": {"name": "TV", "columns": 2, "show_clock": True},
+            "blinds": {"name": "Blinds", "domains": ["cover"]},
+        },
         "blinds": {
             "mode": "manual",
             "schedules": [
@@ -84,6 +87,8 @@ def test_empty_layouts_get_default():
         {"layouts": {"Bad Id": {}}},
         {"layouts": {"tv": {"columns": 9}}},
         {"layouts": {"tv": {"entities": ["camera.a", "bad"]}}},
+        {"layouts": {"tv": {"domains": ["Camera!"]}}},
+        {"layouts": {"tv": {"domains": "camera"}}},
         {"blinds": {"mode": "sometimes"}},
         {"updates": {"mode": "daily"}},
         {"updates": {"day": "someday"}},

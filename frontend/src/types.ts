@@ -55,6 +55,8 @@ export interface Layout {
   /** Legacy, ignored (the clock was removed). */
   show_clock?: boolean;
   entities?: string[];
+  /** Device types shown when `entities` is empty, e.g. ["camera"]; empty = all types. */
+  domains?: string[];
 }
 
 export type BlindMode = "auto" | "manual";

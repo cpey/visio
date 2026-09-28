@@ -305,8 +305,31 @@ export function Settings({ hass, config, onSave, onClose }: Props) {
                 />
               </label>
               <div className="field field--stack">
-                <span className="field__label">Shown devices</span>
-                <span className="hint">None ticked shows everything, including new devices.</span>
+                <span className="field__label">Device types</span>
+                <span className="hint">Shows every device of these types, including new ones. None = all types.</span>
+                <div className="schedule__blinds">
+                  {DISCOVERED_DOMAINS.map((d) => {
+                    const on = layout.domains?.includes(d) ?? false;
+                    return (
+                      <button
+                        key={d}
+                        className={`chip${on ? " chip--on" : ""}`}
+                        aria-pressed={on}
+                        onClick={() => {
+                          const current = layout.domains ?? [];
+                          const next = on ? current.filter((x) => x !== d) : [...current, d];
+                          setLayout(id, { domains: next.length ? next : undefined });
+                        }}
+                      >
+                        {DOMAINS[d]?.title ?? d}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="field field--stack">
+                <span className="field__label">Specific devices (optional)</span>
+                <span className="hint">Ticking any device shows only the ticked ones and overrides device types.</span>
                 <div className="checklist-groups">
                   {byDomain
                     .filter(([, ids]) => ids.length)

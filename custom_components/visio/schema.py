@@ -19,6 +19,7 @@ from typing import Any
 
 ENTITY_ID_RE = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+$")
 LAYOUT_ID_RE = re.compile(r"^[a-z0-9_-]{1,32}$")
+DOMAIN_RE = re.compile(r"^[a-z_]{1,32}$")
 
 MODES = ("live", "snapshot", "placeholder")
 FALLBACKS = ("snapshot", "placeholder", "none")
@@ -44,7 +45,10 @@ def default_config() -> dict[str, Any]:
     """Return the configuration used before anything is stored."""
     return {
         "entities": {},
-        "layouts": {"default": {"name": "Default", "columns": 3}},
+        "layouts": {
+            "default": {"name": "Cameras", "columns": 3, "domains": ["camera"]},
+            "blinds": {"name": "Blinds", "columns": 3, "domains": ["cover"]},
+        },
         # Manual by default: nothing moves on its own until someone opts in.
         "blinds": {"mode": "manual", "schedules": []},
         # Manual by default: nothing updates until someone picks a weekly slot.
@@ -111,7 +115,18 @@ _LAYOUT_FIELDS = {
     "columns": lambda v, f: _int(v, f, 1, 8),
     "show_clock": _bool,  # legacy: accepted for stored configs, no longer used
     "entities": lambda v, f: _entity_list(v, f),
+    # Device types (HA domains) shown when no explicit entity list is set, e.g. ["camera"].
+    "domains": lambda v, f: _domain_list(v, f),
 }
+
+
+def _domain_list(value: Any, field: str) -> list[str]:
+    if not isinstance(value, list) or len(value) > 20:
+        raise ConfigError(f"{field} must be a list of device types")
+    for item in value:
+        if not isinstance(item, str) or not DOMAIN_RE.match(item):
+            raise ConfigError(f"{field} contains an invalid device type")
+    return value
 
 
 def _entity_list(value: Any, field: str) -> list[str]:

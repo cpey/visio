@@ -44,8 +44,9 @@ export function withDefaults(
   return { ...CAMERA_DEFAULTS, mode, ...profile };
 }
 
-export function discoverEntities(states: Record<string, HassEntity>): string[] {
-  return Object.keys(states).filter((id) => DISCOVERED_DOMAINS.includes(domainOf(id)));
+export function discoverEntities(states: Record<string, HassEntity>, domains?: string[]): string[] {
+  const allowed = domains?.length ? domains : DISCOVERED_DOMAINS;
+  return Object.keys(states).filter((id) => DISCOVERED_DOMAINS.includes(domainOf(id)) && allowed.includes(domainOf(id)));
 }
 
 export function pickLayout(config: VisioConfig, requested: string | null): [string, Layout] {
@@ -64,7 +65,7 @@ export function resolveTiles(
 ): ResolvedTile[] {
   const ids = layout.entities?.length
     ? layout.entities.filter((id) => id in states)
-    : discoverEntities(states);
+    : discoverEntities(states, layout.domains);
 
   const tiles = ids
     .map((entityId, index) => {
@@ -98,5 +99,5 @@ export function resolveTiles(
 /** Discovered entities that a layout with an explicit list does not include. */
 export function missingFromLayout(states: Record<string, HassEntity>, layout: Layout): string[] {
   if (!layout.entities?.length) return [];
-  return discoverEntities(states).filter((id) => !layout.entities!.includes(id));
+  return discoverEntities(states, layout.domains).filter((id) => !layout.entities!.includes(id));
 }
