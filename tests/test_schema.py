@@ -41,8 +41,16 @@ def test_full_profile_roundtrip():
                 }
             ],
         },
+        "updates": {"mode": "weekly", "day": "sat", "time": "03:30", "backup": False},
     }
     assert schema.validate_config(config) == config
+
+
+def test_updates_default_to_manual_and_fill_missing_fields():
+    assert schema.validate_config({})["updates"] == {
+        "mode": "manual", "day": "sun", "time": "04:00", "backup": True,
+    }
+    assert schema.validate_config({"updates": {"mode": "weekly"}})["updates"]["time"] == "04:00"
 
 
 def test_missing_blinds_section_gets_defaults():
@@ -77,6 +85,10 @@ def test_empty_layouts_get_default():
         {"layouts": {"tv": {"columns": 9}}},
         {"layouts": {"tv": {"entities": ["camera.a", "bad"]}}},
         {"blinds": {"mode": "sometimes"}},
+        {"updates": {"mode": "daily"}},
+        {"updates": {"day": "someday"}},
+        {"updates": {"time": "4am"}},
+        {"updates": {"reboot_host": True}},
         {"blinds": {"extra": 1}},
         {"blinds": {"schedules": [{"name": "no id"}]}},
         {"blinds": {"schedules": [{"id": "a"}, {"id": "a"}]}},

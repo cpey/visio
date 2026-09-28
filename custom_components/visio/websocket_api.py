@@ -73,8 +73,43 @@ async def ws_set_blind_mode(
     connection.send_result(msg["id"], config)
 
 
+@websocket_api.websocket_command({vol.Required("type"): "visio/updates/status"})
+@websocket_api.require_admin
+@callback
+def ws_updates_status(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Available updates, whether a run is in progress, and the run history."""
+    if DOMAIN not in hass.data:
+        connection.send_error(msg["id"], "not_loaded", "Visio is not set up")
+        return
+    connection.send_result(msg["id"], hass.data[DOMAIN]["updates"].status())
+
+
+@websocket_api.websocket_command(
+    {vol.Required("type"): "visio/updates/run", vol.Optional("entity_ids"): list}
+)
+@websocket_api.require_admin
+@callback
+def ws_updates_run(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Start updating now (all pending, or only `entity_ids`). Returns immediately."""
+    if DOMAIN not in hass.data:
+        connection.send_error(msg["id"], "not_loaded", "Visio is not set up")
+        return
+    only = msg.get("entity_ids")
+    if only is not None and not all(isinstance(e, str) and e.startswith("update.") for e in only):
+        connection.send_error(msg["id"], "invalid", "entity_ids must be update entities")
+        return
+    hass.async_create_task(hass.data[DOMAIN]["updates"].async_run("manual", only), "visio updates")
+    connection.send_result(msg["id"], {"started": True})
+
+
 @callback
 def async_register(hass: HomeAssistant) -> None:
+    websocket_api.async_register_command(hass, ws_updates_status)
+    websocket_api.async_register_command(hass, ws_updates_run)
     websocket_api.async_register_command(hass, ws_get_config)
     websocket_api.async_register_command(hass, ws_set_config)
     websocket_api.async_register_command(hass, ws_set_blind_mode)

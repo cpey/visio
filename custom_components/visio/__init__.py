@@ -15,6 +15,7 @@ from homeassistant.helpers.typing import ConfigType
 from . import websocket_api
 from .app_view import VisioAppView
 from .scheduler import BlindScheduler
+from .updater import UpdateManager
 from .const import (
     APP_FILES_URL,
     DOMAIN,
@@ -59,7 +60,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Reads the store on every tick, so saved schedule changes apply immediately.
     scheduler = BlindScheduler(hass, lambda: store.config)
     scheduler.async_start()
-    hass.data[DOMAIN] = {"store": store, "scheduler": scheduler}
+    updates = UpdateManager(hass, lambda: store.config)
+    await updates.async_load()
+    updates.async_start()
+    hass.data[DOMAIN] = {"store": store, "scheduler": scheduler, "updates": updates}
 
     bundle_hash = await hass.async_add_executor_job(_bundle_hash)
     await panel_custom.async_register_panel(
@@ -80,4 +84,5 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     data = hass.data.pop(DOMAIN, None)
     if data:
         data["scheduler"].async_stop()
+        data["updates"].async_stop()
     return True

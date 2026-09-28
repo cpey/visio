@@ -4,6 +4,7 @@ import { DISCOVERED_DOMAINS, discoverEntities, domainOf, withDefaults } from "..
 import { COMMON_FIELDS, DOMAINS } from "../tiles/registry";
 import type { FieldSpec } from "../tiles/types";
 import { Icon } from "./icons";
+import { SystemSettings } from "./SystemSettings";
 
 interface Props {
   hass: Hass;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 const LAYOUTS_TAB = "layouts";
+const SYSTEM_TAB = "system";
 
 function FieldInput({
   hass,
@@ -163,11 +165,13 @@ export function Settings({ hass, config, onSave, onClose }: Props) {
   const tabs = [
     ...byDomain.filter(([, ids]) => ids.length).map(([d, ids]) => ({ id: d, label: DOMAINS[d]?.title ?? d, count: ids.length })),
     { id: LAYOUTS_TAB, label: "Layouts", count: Object.keys(draft.layouts).length },
-  ];
+    { id: SYSTEM_TAB, label: "System" },
+  ] as { id: string; label: string; count?: number }[];
   const [tab, setTab] = useState<string>(() => tabs[0].id);
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(config);
-  const DomainSettings = tab !== LAYOUTS_TAB ? DOMAINS[tab]?.settingsSection : undefined;
+  const isDeviceTab = tab !== LAYOUTS_TAB && tab !== SYSTEM_TAB;
+  const DomainSettings = isDeviceTab ? DOMAINS[tab]?.settingsSection : undefined;
 
   const setProfile = (id: string, key: keyof EntityProfile, value: unknown) =>
     setDraft((d) => ({
@@ -238,12 +242,12 @@ export function Settings({ hass, config, onSave, onClose }: Props) {
             }}
           >
             {t.label}
-            <span className="tabs__count">{t.count}</span>
+            {t.count !== undefined && <span className="tabs__count">{t.count}</span>}
           </button>
         ))}
       </nav>
 
-      {tab !== LAYOUTS_TAB && DomainSettings && (
+      {isDeviceTab && DomainSettings && (
         <DomainSettings
           hass={hass}
           draft={draft}
@@ -252,7 +256,9 @@ export function Settings({ hass, config, onSave, onClose }: Props) {
         />
       )}
 
-      {tab !== LAYOUTS_TAB ? (
+      {tab === SYSTEM_TAB ? (
+        <SystemSettings hass={hass} draft={draft} setDraft={setDraft} />
+      ) : isDeviceTab ? (
         <section className="rows">
           {DomainSettings && <h2 className="rows__title">Devices</h2>}
           {(byDomain.find(([d]) => d === tab)?.[1] ?? []).map((id) => (

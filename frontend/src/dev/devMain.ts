@@ -98,6 +98,24 @@ function makeHass(): Hass {
         case "visio/config/set":
           config = structuredClone(msg.config as VisioConfig);
           return structuredClone(config) as T;
+        case "visio/updates/status":
+          return {
+            running: false,
+            pending: null,
+            items: [
+              { entity_id: "update.home_assistant_operating_system_update", title: "Home Assistant Operating System", installed: "18.3", latest: "18.4", available: true, in_progress: false, kind: "os", platform: "hassio", release_url: "https://github.com/home-assistant/operating-system/releases" },
+              { entity_id: "update.home_assistant_core_update", title: "Home Assistant Core", installed: "2026.9.4", latest: "2026.9.5", available: true, in_progress: false, kind: "core", platform: "hassio", release_url: null },
+              { entity_id: "update.tapo_cameras_control_update", title: "Tapo: Cameras Control", installed: "7.2.0", latest: "7.3.1", available: true, in_progress: false, kind: "other", platform: "hacs", release_url: null },
+              { entity_id: "update.tailscale_update", title: "Tailscale", installed: "0.30.1", latest: "0.30.1", available: false, in_progress: false, kind: "other", platform: "hassio", release_url: null },
+            ],
+            history: [
+              { time: "2026-09-27T04:00:12", trigger: "scheduled", summary: "All updates installed", results: [
+                { entity_id: "update.visio_update", title: "Visio", from: "0.1.0", to: "0.1.1", ok: true, error: null },
+              ] },
+            ],
+          } as T;
+        case "visio/updates/run":
+          return { started: true } as T;
         case "visio/blinds/mode":
           config = { ...config, blinds: { ...config.blinds!, mode: msg.mode as "auto" | "manual" } };
           return structuredClone(config) as T;

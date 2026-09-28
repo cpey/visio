@@ -77,8 +77,53 @@ export interface BlindsConfig {
   schedules: BlindSchedule[];
 }
 
+export interface UpdatesConfig {
+  mode: "manual" | "weekly";
+  day: Day;
+  time: string;
+  backup: boolean;
+}
+
 export interface VisioConfig {
   entities: Record<string, EntityProfile>;
   layouts: Record<string, Layout>;
   blinds?: BlindsConfig;
+  updates?: UpdatesConfig;
+}
+
+export interface UpdateItem {
+  entity_id: string;
+  title: string;
+  installed: string | null;
+  latest: string | null;
+  available: boolean;
+  in_progress: boolean;
+  kind: "os" | "core" | "other";
+  platform: string | null;
+  release_url: string | null;
+}
+
+export interface UpdateResult {
+  entity_id: string;
+  title: string;
+  from: string | null;
+  to: string | null;
+  ok: boolean;
+  started?: boolean;
+  error: string | null;
+}
+
+export interface UpdateRun {
+  time: string;
+  trigger: "manual" | "scheduled" | "resumed";
+  summary: string;
+  results: UpdateResult[];
+  run_open?: boolean;
+}
+
+export interface UpdatesStatus {
+  items: UpdateItem[];
+  running: boolean;
+  pending: string[] | null;
+  history: UpdateRun[];
 }

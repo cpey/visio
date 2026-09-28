@@ -29,7 +29,7 @@ for (const s of shots) {
   await panel.locator(".row__head").first().click();
   await page.waitForTimeout(300);
   await page.screenshot({ path: `${out}/${s.name}-settings.png`, fullPage: true });
-  for (const tab of ["Blinds", "Layouts"]) {
+  for (const tab of ["Blinds", "Layouts", "System"]) {
     await panel.getByRole("tab", { name: new RegExp(tab) }).click();
     await page.waitForTimeout(300);
     await page.screenshot({ path: `${out}/${s.name}-settings-${tab.toLowerCase()}.png`, fullPage: true });

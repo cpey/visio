@@ -323,6 +323,16 @@ code { color: var(--muted); font-size: .85em; }
 }
 .week__time:focus { outline: none; border-color: var(--accent); }
 .schedule__shortcuts { display: flex; flex-wrap: wrap; gap: 8px; }
+.system__when { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.system__when select, .system__when input { max-width: 180px; }
+.system__actions { display: flex; gap: 8px; }
+.system__kind { margin-left: 8px; vertical-align: middle; }
+.row__head--static { cursor: default; }
+.row__head--static:hover { background: transparent; }
+.row__meta a { color: var(--accent); text-decoration: none; }
+.system__run .card__title { font-weight: 600; }
+.system__result { font-size: .9rem; color: var(--text); }
+.system__result--failed { color: var(--live); }
 .schedule__shortcuts .btn { padding: 7px 12px; font-size: .88rem; }
 .schedule { grid-template-columns: minmax(0, 1fr); }
 .week__day--short { display: none; }

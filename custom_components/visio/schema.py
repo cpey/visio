@@ -31,6 +31,7 @@ MAX_LAYOUTS = 20
 MAX_SCHEDULES = 20
 
 BLIND_MODES = ("auto", "manual")
+UPDATE_MODES = ("manual", "weekly")
 DAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")  # index = datetime.weekday()
 TIME_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
@@ -46,6 +47,8 @@ def default_config() -> dict[str, Any]:
         "layouts": {"default": {"name": "Default", "columns": 3}},
         # Manual by default: nothing moves on its own until someone opts in.
         "blinds": {"mode": "manual", "schedules": []},
+        # Manual by default: nothing updates until someone picks a weekly slot.
+        "updates": {"mode": "manual", "day": "sun", "time": "04:00", "backup": True},
     }
 
 
@@ -193,11 +196,25 @@ def _blinds(value: Any, field: str) -> dict[str, Any]:
     }
 
 
+def _updates(value: Any, field: str) -> dict[str, Any]:
+    clean = _object(
+        value,
+        {
+            "mode": lambda v, f: _choice(v, f, UPDATE_MODES),
+            "day": lambda v, f: _choice(v, f, DAYS),
+            "time": _time,
+            "backup": _bool,
+        },
+        field,
+    )
+    return {**default_config()["updates"], **clean}
+
+
 def validate_config(data: Any) -> dict[str, Any]:
     """Validate a full configuration document and return a clean copy."""
     if not isinstance(data, dict):
         raise ConfigError("config must be an object")
-    unknown = set(data) - {"entities", "layouts", "blinds"}
+    unknown = set(data) - {"entities", "layouts", "blinds", "updates"}
     if unknown:
         raise ConfigError(f"unknown top-level fields: {', '.join(sorted(unknown))}")
 
@@ -223,4 +240,5 @@ def validate_config(data: Any) -> dict[str, Any]:
         },
         "layouts": clean_layouts,
         "blinds": _blinds(data.get("blinds", {}), "blinds"),
+        "updates": _updates(data.get("updates", {}), "updates"),
     }
