@@ -52,6 +52,11 @@ without asking the user first.**
   `qemu-system-x86`, `qemu-utils`, `libvirt-daemon-system`, `libvirt-clients`, `virtinst`, `ovmf`.
   Anything beyond this list still needs approval. Node packages stay local in `frontend/node_modules`.
 - Python: `.venv/` created with `python3 -m venv .venv`; always use `.venv/bin/pip` / `.venv/bin/pytest`.
+  Dependencies are pinned exactly: `requirements-dev.txt` (tests, used by CI) and
+  `requirements-tools.txt` (LAN discovery: python-kasa, tinytuya, zeroconf; git-filter-repo).
+  When adding a package, install it into `.venv` and add it (and new transitive deps) with
+  its exact version to the right file.
+- Node: `frontend/package.json` + `package-lock.json` pin everything; use `npm ci`.
 - VM images, downloads and caches go in `.vm/` or `.tools/`, never in system paths
   (the libvirt domain points its disk at `.vm/haos.qcow2`).
 - **Requires explicit user approval** (ask before running): `sudo`, `apt`/`apt-get`/`dpkg`, `snap`,
@@ -62,6 +67,11 @@ without asking the user first.**
 ## Commands
 
 ```bash
+# One-time setup (from repo root)
+python3 -m venv .venv
+.venv/bin/pip install -r requirements-dev.txt -r requirements-tools.txt
+(cd frontend && npm ci && PLAYWRIGHT_BROWSERS_PATH=../.tools/ms-playwright npx playwright install chromium)
+
 cd frontend && npm ci                      # install
 npm run dev                                # dev server (mock hass)
 npm run build                              # builds ../custom_components/visio/www/visio-panel.js

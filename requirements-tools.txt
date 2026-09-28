@@ -1,0 +1,29 @@
+# Network discovery and maintenance tools (not needed by CI or the integration).
+# python-kasa / tinytuya / zeroconf: identify TP-Link, Tuya and Matter/HomeKit devices
+# on the LAN; git-filter-repo: history maintenance. Exact pins from the project .venv.
+# Install: .venv/bin/pip install -r requirements-tools.txt
+aiohappyeyeballs==2.7.1
+aiohttp==3.14.3
+aiosignal==1.4.0
+asyncclick==8.4.2.1
+attrs==26.1.0
+certifi==2026.7.22
+cffi==2.1.1
+charset-normalizer==3.5.1
+colorama==0.4.6
+cryptography==50.0.1
+frozenlist==1.8.0
+git-filter-repo==2.47.0
+idna==3.20
+ifaddr==0.2.0
+mashumaro==3.22
+multidict==6.9.1
+propcache==0.5.4
+pycparser==3.0
+python-kasa==0.10.2
+requests==2.34.2
+tinytuya==1.20.0
+typing_extensions==4.16.0
+urllib3==2.8.0
+yarl==1.25.1
+zeroconf==0.151.3
