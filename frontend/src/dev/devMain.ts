@@ -52,6 +52,8 @@ const states: Record<string, HassEntity> = {
   },
 };
 
+let restartUntil = 0;
+
 let config: VisioConfig = {
   entities: {
     "camera.front_door": { mode: "live", order: 1 },
@@ -99,8 +101,11 @@ function makeHass(): Hass {
           config = structuredClone(msg.config as VisioConfig);
           return structuredClone(config) as T;
         case "visio/info":
-          return { version: "0.2.0-dev+ab4b01a" } as T;
+          if (Date.now() < restartUntil) throw { code: 3, message: "Connection lost" };
+          return { version: restartUntil ? "0.3.0" : "0.2.0-dev+ab4b01a" } as T;
         case "visio/updates/status":
+          // Simulated restart after "Update" (see visio/updates/run below).
+          if (Date.now() < restartUntil) throw { code: 3, message: "Connection lost" };
           return {
             running: false,
             pending: null,
@@ -117,6 +122,7 @@ function makeHass(): Hass {
             ],
           } as T;
         case "visio/updates/run":
+          restartUntil = Date.now() + 8000;
           return { started: true } as T;
         case "visio/blinds/mode":
           config = { ...config, blinds: { ...config.blinds!, mode: msg.mode as "auto" | "manual" } };

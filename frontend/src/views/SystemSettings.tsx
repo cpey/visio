@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { getVersion } from "../api/config";
 import { getUpdatesStatus, runUpdates } from "../api/updates";
 import { DAYS, type Day, type Hass, type UpdateItem, type UpdatesConfig, type UpdatesStatus, type VisioConfig } from "../types";
 
@@ -24,26 +25,65 @@ export function SystemSettings({ hass, draft, setDraft }: Props) {
   const updates = { ...DEFAULTS, ...draft.updates };
   const [status, setStatus] = useState<UpdatesStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // A run that installs integrations/Core/OS restarts Home Assistant; while it's
+  // unreachable we show "restarting" instead of an error and keep checking.
+  const [restartExpected, setRestartExpected] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
+  const [loadedVersion, setLoadedVersion] = useState<string | null>(null);
+  const [newVersion, setNewVersion] = useState<string | null>(null);
+  // Refs mirror the flags so a load() scheduled earlier still sees the current values.
+  const restartRef = useRef(false);
+  const reconnectingRef = useRef(false);
+  const runningRef = useRef(false);
+  const versionRef = useRef<string | null>(null);
+  const expectRestart = (on: boolean) => {
+    restartRef.current = on;
+    setRestartExpected(on);
+  };
+  const markReconnecting = (on: boolean) => {
+    reconnectingRef.current = on;
+    setReconnecting(on);
+  };
+
+  useEffect(() => {
+    // Version of the code running in this page, captured once.
+    getVersion(hass).then((v) => {
+      versionRef.current = v;
+      setLoadedVersion(v);
+    });
+  }, []);
 
   const load = useCallback(async () => {
     try {
-      setStatus(await getUpdatesStatus(hass));
+      const next = await getUpdatesStatus(hass);
+      setStatus(next);
+      runningRef.current = next.running;
       setError(null);
+      if (reconnectingRef.current || restartRef.current) {
+        // Back after a restart: check whether Visio itself changed.
+        const running = await getVersion(hass);
+        if (running && versionRef.current && running !== versionRef.current) setNewVersion(running);
+        if (reconnectingRef.current && !next.running) expectRestart(false);
+      }
+      markReconnecting(false);
     } catch (err) {
-      setError((err as Error)?.message ?? "Could not load updates");
+      if (restartRef.current || runningRef.current) markReconnecting(true);
+      else setError((err as Error)?.message ?? "Could not load updates");
     }
-    // Load on demand only; hass identity changes on every state update.
+    // Stable: reads current values through refs; hass identity changes on every state update.
   }, []);
 
-  // Refresh on open, and every 5 s while a run is in progress.
+  // Refresh on open, and every 5 s while a run is in progress or HA is restarting.
   useEffect(() => {
     load();
-  }, [load]);
+    // Initial load only.
+  }, []);
+  const polling = !!status?.running || !!status?.items.some((i) => i.in_progress) || reconnecting || restartExpected;
   useEffect(() => {
-    if (!status?.running && !status?.items.some((i) => i.in_progress)) return;
+    if (!polling) return;
     const id = setInterval(load, 5000);
     return () => clearInterval(id);
-  }, [status, load]);
+  }, [polling, load]);
 
   const set = (patch: Partial<UpdatesConfig>) => setDraft((d) => ({ ...d, updates: { ...DEFAULTS, ...d.updates, ...patch } }));
 
@@ -51,13 +91,18 @@ export function SystemSettings({ hass, draft, setDraft }: Props) {
     const names = entityIds
       ? status?.items.filter((i) => entityIds.includes(i.entity_id)).map((i) => i.title).join(", ")
       : "all available updates";
-    const reboots = (entityIds ?? available.map((i) => i.entity_id)).some((id) =>
-      status?.items.find((i) => i.entity_id === id && (i.kind === "os" || i.kind === "core")),
-    );
-    const note = reboots ? "\n\nHome Assistant will restart (and the system reboot for an OS update)." : "";
+    const chosen = (entityIds ?? available.map((i) => i.entity_id))
+      .map((id) => status?.items.find((i) => i.entity_id === id))
+      .filter((i): i is UpdateItem => !!i);
+    // Core, OS and HACS integrations (incl. Visio) all end with a restart.
+    const restarts = chosen.some((i) => i.kind !== "other" || i.platform === "hacs");
+    const note = restarts
+      ? "\n\nHome Assistant will restart afterwards (and the system reboots for an OS update). This page reconnects by itself."
+      : "";
     if (!confirm(`Install ${names} now?${note}`)) return;
     try {
       await runUpdates(hass, entityIds);
+      expectRestart(restarts);
       setTimeout(load, 1500);
     } catch (err) {
       setError((err as Error)?.message ?? "Could not start updates");
@@ -69,6 +114,17 @@ export function SystemSettings({ hass, draft, setDraft }: Props) {
 
   return (
     <section className="rows system">
+      <h2 className="schedules__title">Installed version</h2>
+      <div className="card system__version">
+        <span className="system__version-number">Visio {loadedVersion ?? "…"}</span>
+        {loadedVersion?.includes("-dev") && <span className="badge badge--stale">dev build</span>}
+        <span className="hint">
+          {loadedVersion?.includes("-dev")
+            ? "Development deploy (based on that release, plus the commit after “+”)."
+            : "Installed from a GitHub release through HACS."}
+        </span>
+      </div>
+
       <div className="schedules__head">
         <div>
           <h2 className="schedules__title">Automatic updates</h2>
@@ -129,7 +185,16 @@ export function SystemSettings({ hass, draft, setDraft }: Props) {
           </button>
         </div>
       </div>
-      {error && <p className="schedules__paused">⚠ {error}</p>}
+      {reconnecting && <p className="system__notice">Home Assistant is restarting… reconnecting</p>}
+      {newVersion && (
+        <p className="system__notice">
+          Visio was updated to {newVersion}.{" "}
+          <button className="btn" onClick={() => window.location.reload()}>
+            Reload to use it
+          </button>
+        </p>
+      )}
+      {error && !reconnecting && <p className="schedules__paused">⚠ {error}</p>}
       {status?.pending && (
         <p className="schedules__paused">Waiting to continue after the restart: {status.pending.length} update(s).</p>
       )}

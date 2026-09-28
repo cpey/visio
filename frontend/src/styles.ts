@@ -332,6 +332,10 @@ code { color: var(--muted); font-size: .85em; }
 .system__when select, .system__when input { max-width: 180px; }
 .system__actions { display: flex; gap: 8px; }
 .system__kind { margin-left: 8px; vertical-align: middle; }
+.card.system__version { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.system__version-number { font-weight: 650; font-variant-numeric: tabular-nums; }
+.system__version .hint { flex-basis: 100%; }
+.system__notice { margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--accent); font-size: .9rem; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .row__head--static { cursor: default; }
 .row__head--static:hover { background: transparent; }
 .row__meta a { color: var(--accent); text-decoration: none; }
@@ -371,8 +375,9 @@ code { color: var(--muted); font-size: .85em; }
 @media (max-width: 640px) {
   .field { grid-template-columns: 1fr; gap: 6px; }
   .field--bool { grid-template-columns: 1fr auto; }
-  .tabs { align-self: stretch; }
-  .tabs__tab { flex: 1; justify-content: center; padding: 8px 10px; }
+  /* All tabs visible on phones: a 2-column grid instead of a sideways-scrolling row. */
+  .tabs { align-self: stretch; display: grid; grid-template-columns: 1fr 1fr; overflow: visible; }
+  .tabs__tab { justify-content: center; padding: 9px 10px; }
 }
 .field input:not([type=checkbox]), .field select {
   width: 100%; max-width: 360px; background: var(--input-bg); color: var(--text); border: 1px solid var(--hairline);
