@@ -85,9 +85,9 @@ export const DOMAINS: Record<string, DomainDefinition> = {
   },
   cover: {
     title: "Blinds",
-    fields: [{ key: "hide_tilt", label: "Hide tilt", kind: "bool" }],
+    fields: [],
     pickTile: () => "cover",
-    summary: (p) => (p.hide_tilt ? ["Tilt hidden"] : []),
+    summary: () => [],
     groupControl: CoverGroupControl,
     sectionControl: BlindModeControl,
     settingsSection: ScheduleEditor,

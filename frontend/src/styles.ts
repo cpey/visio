@@ -168,8 +168,18 @@ code { color: var(--muted); font-size: .85em; }
 @media (max-width: 700px) { .mode-control { margin-left: 0; width: 100%; justify-content: space-between; } }
 .section__title { margin: 0; font-size: .78rem; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
 .select-all { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: .88rem; cursor: pointer; }
-.select-all input, .select-box { width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; }
-.select-box { position: absolute; top: 18px; left: 16px; z-index: 1; margin: 0; }
+.select-all input { width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; }
+.select-box {
+  position: absolute; top: 17px; left: 16px; z-index: 1; width: 20px; height: 20px; border-radius: 6px;
+  border: 2px solid var(--muted); background: var(--surface-solid); pointer-events: none;
+}
+.select-box--on { background: var(--accent); border-color: var(--accent); }
+.select-box--on::after {
+  content: ""; position: absolute; left: 5px; top: 1px; width: 5px; height: 10px;
+  border: solid var(--on-accent); border-width: 0 2.5px 2.5px 0; transform: rotate(45deg);
+}
+.grid__cell--selectable { cursor: pointer; }
+.grid__cell--selectable:focus-visible .tile { box-shadow: 0 0 0 3px var(--accent); }
 
 .grid { display: grid; gap: 14px; }
 .grid--controls { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
@@ -231,6 +241,29 @@ code { color: var(--muted); font-size: .85em; }
 .control__slider { display: grid; grid-template-columns: 64px 1fr 44px; align-items: center; gap: 12px; color: var(--muted); font-size: .9rem; }
 .control__slider input { width: 100%; accent-color: var(--accent); height: 28px; cursor: pointer; }
 .control__value { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); font-weight: 550; }
+
+/* Blind cards (tap to select) */
+.tile--blind { gap: 8px; padding: 16px 18px; }
+.grid--controls:has(.tile--blind) { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.blind__state { color: var(--muted); font-size: .9rem; padding-left: 68px; }
+.grid__cell--selectable .tile--blind .control__head { padding-left: 32px; }
+
+/* The one blinds control panel */
+.blind-panel {
+  background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius);
+  padding: 16px 18px; display: grid; gap: 14px;
+}
+.blind-panel__top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.blind-panel__top .select-all { margin-left: 0; color: var(--text); font-weight: 600; }
+.blind-panel__selection { color: var(--text); font-weight: 600; }
+.blind-panel--idle .blind-panel__selection { color: var(--muted); font-weight: 400; }
+.blind-panel__slider { display: grid; grid-template-columns: auto 1fr auto 48px; align-items: center; gap: 12px; }
+.blind-panel__slider input { width: 100%; accent-color: var(--accent); height: 32px; cursor: pointer; }
+.blind-panel__end { color: var(--muted); font-size: .88rem; }
+.blind-panel__buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.blind-panel__buttons .btn { padding: 12px 0; font-size: 1rem; }
+.blind-panel--idle .blind-panel__buttons .btn { background: var(--surface-2); color: var(--text); }
+.blind-panel__error { margin: 0; color: var(--live); font-size: .9rem; }
 
 .blind-viz {
   position: relative; flex: none; width: 24px; height: 28px; border-radius: 4px;

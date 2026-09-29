@@ -112,20 +112,32 @@ export function Grid({ hass, layout, tiles, refreshing, onRefresh, onOpenMenu, m
                   const isFocused = focused === tile.entityId;
                   if (!expandable) {
                     const isSelected = selected.has(tile.entityId);
+                    if (GroupControl) {
+                      // Selectable card: the whole card toggles selection (tap, Enter or Space).
+                      const toggleSelected = () => setSelection([tile.entityId], !isSelected);
+                      return (
+                        <div
+                          key={tile.entityId}
+                          className={`grid__cell grid__cell--selectable${isSelected ? " grid__cell--selected" : ""}`}
+                          role="checkbox"
+                          aria-checked={isSelected}
+                          aria-label={tile.name}
+                          tabIndex={0}
+                          onClick={toggleSelected}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              toggleSelected();
+                            }
+                          }}
+                        >
+                          <span className={`select-box${isSelected ? " select-box--on" : ""}`} aria-hidden="true" />
+                          <Tile hass={hass} tile={tile} />
+                        </div>
+                      );
+                    }
                     return (
-                      <div
-                        key={tile.entityId}
-                        className={`grid__cell grid__cell--static${GroupControl ? " grid__cell--selectable" : ""}${isSelected ? " grid__cell--selected" : ""}`}
-                      >
-                        {GroupControl && (
-                          <input
-                            type="checkbox"
-                            className="select-box"
-                            aria-label={`Select ${tile.name}`}
-                            checked={isSelected}
-                            onChange={(e) => setSelection([tile.entityId], e.target.checked)}
-                          />
-                        )}
+                      <div key={tile.entityId} className="grid__cell grid__cell--static">
                         <Tile hass={hass} tile={tile} />
                       </div>
                     );
