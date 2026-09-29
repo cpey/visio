@@ -53,6 +53,8 @@ const states: Record<string, HassEntity> = {
 };
 
 let restartUntil = 0;
+// ?down=1 simulates unresponsive blinds until "Reconnect" (visio/reconnect).
+let blindsDown = new URLSearchParams(location.search).get("down") === "1";
 
 let config: VisioConfig = {
   entities: {
@@ -86,8 +88,12 @@ let config: VisioConfig = {
 const hues: Record<string, number> = { "camera.front_door": 210, "camera.garden": 120, "camera.driveway": 30 };
 
 function makeHass(): Hass {
+  const current = { ...states };
+  if (blindsDown) {
+    for (const id of Object.keys(current)) if (id.startsWith("cover.")) current[id] = { ...current[id], state: "unavailable" };
+  }
   return {
-    states: { ...states },
+    states: current,
     user: { is_admin: true, name: "Dev" },
     hassUrl: (path = "") => {
       const match = path.match(/^mock:\/\/([^?&]+)/);
@@ -121,6 +127,12 @@ function makeHass(): Hass {
               ] },
             ],
           } as T;
+        case "visio/reconnect":
+          setTimeout(() => {
+            blindsDown = false;
+            panel.hass = makeHass();
+          }, 3000);
+          return { reloaded: ["Norman ShadeAuto"], errors: [] } as T;
         case "visio/updates/check":
           await new Promise((r) => setTimeout(r, 1500));
           return { ...(await makeHass().callWS<object>({ type: "visio/updates/status" })), last_check: new Date().toISOString(), errors: [] } as T;

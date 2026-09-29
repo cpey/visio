@@ -264,6 +264,11 @@ code { color: var(--muted); font-size: .85em; }
 .blind-panel__buttons .btn { padding: 12px 0; font-size: 1rem; }
 .blind-panel--idle .blind-panel__buttons .btn { background: var(--surface-2); color: var(--text); }
 .blind-panel__error { margin: 0; color: var(--live); font-size: .9rem; }
+.blind-panel__down {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 12px 14px; border-radius: var(--radius-sm); background: rgba(229, 72, 77, .1); color: var(--text); font-size: .92rem;
+}
+.blind-panel__down strong { color: var(--live); }
 
 .blind-viz {
   position: relative; flex: none; width: 24px; height: 28px; border-radius: 4px;

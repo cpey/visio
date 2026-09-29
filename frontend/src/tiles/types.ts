@@ -39,6 +39,8 @@ export interface GroupControlProps {
   hass: Hass;
   /** Selected entities of this domain; empty = show the control disabled. */
   entityIds: string[];
+  /** Every entity of this section (selected or not), e.g. to detect unresponsive devices. */
+  allIds: string[];
   /** "Select all" state for this section, rendered inside the control. */
   selectAll: { checked: boolean; indeterminate: boolean; onChange(checked: boolean): void };
 }

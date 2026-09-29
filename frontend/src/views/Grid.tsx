@@ -96,6 +96,7 @@ export function Grid({ hass, layout, tiles, refreshing, onRefresh, onOpenMenu, m
                 <GroupControl
                   hass={hass}
                   entityIds={chosen}
+                  allIds={sectionIds}
                   selectAll={{
                     checked: allChosen,
                     indeterminate: chosen.length > 0 && !allChosen,

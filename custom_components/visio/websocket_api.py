@@ -118,6 +118,27 @@ def ws_updates_run(
     connection.send_result(msg["id"], {"started": True})
 
 
+@websocket_api.websocket_command(
+    {vol.Required("type"): "visio/reconnect", vol.Required("entity_ids"): list}
+)
+@websocket_api.async_response
+async def ws_reconnect(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Reconnect (reload) the integrations behind these entities. Any household user.
+
+    Limited to the watched device types, so it can't be used to reload arbitrary
+    integrations.
+    """
+    if DOMAIN not in hass.data:
+        connection.send_error(msg["id"], "not_loaded", "Visio is not set up")
+        return
+    ids = [e for e in msg["entity_ids"] if isinstance(e, str) and e.split(".", 1)[0] in ("cover", "camera")]
+    watchdog = hass.data[DOMAIN]["watchdog"]
+    result = await watchdog.async_reconnect(watchdog.entries_for(ids), reason="button")
+    connection.send_result(msg["id"], result)
+
+
 @websocket_api.websocket_command({vol.Required("type"): "visio/updates/check"})
 @websocket_api.require_admin
 @websocket_api.async_response
@@ -136,6 +157,7 @@ async def ws_updates_check(
 @callback
 def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_updates_check)
+    websocket_api.async_register_command(hass, ws_reconnect)
     websocket_api.async_register_command(hass, ws_info)
     websocket_api.async_register_command(hass, ws_updates_status)
     websocket_api.async_register_command(hass, ws_updates_run)

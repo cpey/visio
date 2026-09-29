@@ -17,6 +17,7 @@ from . import websocket_api
 from .app_view import VisioAppView
 from .scheduler import BlindScheduler
 from .updater import UpdateManager
+from .watchdog import IntegrationWatchdog
 from .const import (
     APP_FILES_URL,
     DOMAIN,
@@ -69,8 +70,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     updates = UpdateManager(hass, lambda: store.config)
     await updates.async_load()
     updates.async_start()
+    watchdog = IntegrationWatchdog(hass)
+    watchdog.async_start()
     version = await hass.async_add_executor_job(_version)
-    hass.data[DOMAIN] = {"store": store, "scheduler": scheduler, "updates": updates, "version": version}
+    hass.data[DOMAIN] = {
+        "store": store,
+        "scheduler": scheduler,
+        "updates": updates,
+        "watchdog": watchdog,
+        "version": version,
+    }
 
     bundle_hash = await hass.async_add_executor_job(_bundle_hash)
     await panel_custom.async_register_panel(
@@ -92,4 +101,5 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if data:
         data["scheduler"].async_stop()
         data["updates"].async_stop()
+        data["watchdog"].async_stop()
     return True

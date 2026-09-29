@@ -87,6 +87,17 @@ export function SystemSettings({ hass, draft, setDraft }: Props) {
     return () => clearInterval(id);
   }, [polling, load]);
 
+  const restartHa = async () => {
+    if (!confirm("Restart Home Assistant now?\n\nCameras and blinds are unavailable for about a minute. This page reconnects by itself.")) return;
+    expectRestart(true);
+    try {
+      await hass.callWS({ type: "call_service", domain: "homeassistant", service: "restart", service_data: {} });
+    } catch {
+      // The connection often drops before the reply arrives; the reconnect loop takes over.
+    }
+    markReconnecting(true);
+  };
+
   const check = async () => {
     setChecking(true);
     setError(null);
@@ -140,6 +151,17 @@ export function SystemSettings({ hass, draft, setDraft }: Props) {
             ? "Development deploy (based on that release, plus the commit after “+”)."
             : "Installed from a GitHub release through HACS."}
         </span>
+      </div>
+
+      <h2 className="schedules__title">Home Assistant</h2>
+      <div className="card system__version">
+        <span className="hint system__restart-hint">
+          Last resort if something stays stuck (for unresponsive blinds, use Reconnect in the Blinds view first).
+          Restarts Home Assistant only; takes about a minute.
+        </span>
+        <button className="btn btn--ghost" onClick={restartHa} disabled={reconnecting || restartExpected}>
+          {reconnecting || restartExpected ? "Restarting…" : "Restart Home Assistant"}
+        </button>
       </div>
 
       <div className="schedules__head">

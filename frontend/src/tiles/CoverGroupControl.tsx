@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { reconnect } from "../api/reconnect";
 import { callService } from "../api/services";
 import { runSequentially } from "../lib/sequence";
 import type { GroupControlProps } from "./types";
@@ -12,10 +13,33 @@ const COMMAND_GAP_MS = 300;
  * The one control for blinds: position slider plus Fully open / Fully close,
  * applied to the selected blinds (tap cards to select), one command per blind.
  */
-export function CoverGroupControl({ hass, entityIds, selectAll }: GroupControlProps) {
+export function CoverGroupControl({ hass, entityIds, allIds, selectAll }: GroupControlProps) {
   const [position, setPosition] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
+  const [reconnectTried, setReconnectTried] = useState(false);
+
+  const unresponsive = allIds.filter((id) => !hass.states[id] || hass.states[id].state === "unavailable");
+  // Forget a previous attempt once everything responds again.
+  useEffect(() => {
+    if (unresponsive.length === 0) setReconnectTried(false);
+  }, [unresponsive.length]);
+
+  const doReconnect = async () => {
+    setReconnecting(true);
+    try {
+      await reconnect(hass, unresponsive);
+    } catch {
+      // The notice below explains what to check if it's still down.
+    } finally {
+      // Give the integration a moment to fetch the blinds' status again.
+      setTimeout(() => {
+        setReconnecting(false);
+        setReconnectTried(true);
+      }, 8000);
+    }
+  };
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
 
@@ -51,6 +75,26 @@ export function CoverGroupControl({ hass, entityIds, selectAll }: GroupControlPr
 
   return (
     <div className={`blind-panel${none ? " blind-panel--idle" : ""}`}>
+      {unresponsive.length > 0 && (
+        <div className="blind-panel__down" role="alert">
+          <span>
+            <strong>
+              {unresponsive.length === allIds.length
+                ? "Blinds aren't responding"
+                : `${unresponsive.map((id) => hass.states[id]?.attributes.friendly_name ?? id).join(", ")} ${unresponsive.length === 1 ? "isn't" : "aren't"} responding`}
+            </strong>
+            <br />
+            {reconnecting
+              ? "Reconnecting…"
+              : reconnectTried
+                ? "Still not responding. Check that the blinds hub has power and is connected to the network."
+                : "Home Assistant lost the connection to the blinds hub."}
+          </span>
+          <button className="btn" onClick={doReconnect} disabled={reconnecting}>
+            {reconnecting ? "Reconnecting…" : "Reconnect"}
+          </button>
+        </div>
+      )}
       <div className="blind-panel__top">
         <label className="select-all">
           <input
