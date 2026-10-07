@@ -218,6 +218,8 @@ code { color: var(--muted); font-size: .85em; }
 @keyframes visio-pulse { 50% { opacity: .25; } }
 .badge--motion { background: var(--motion); color: #1a1200; }
 .badge--stale { background: var(--surface-3); color: var(--text); }
+.badge--ok { background: rgba(48, 164, 108, .16); color: #2f9e68; }
+.badge--warn { background: rgba(255, 178, 36, .16); color: var(--motion); }
 
 /* Kept rendered (not display:none) so the browser decodes frames while the fallback shows. */
 .live-host--hidden { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
@@ -380,6 +382,9 @@ code { color: var(--muted); font-size: .85em; }
 .system__run .card__title { font-weight: 600; }
 .system__result { font-size: .9rem; color: var(--text); }
 .system__result--failed { color: var(--live); }
+.backups__facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; font-size: .92rem; }
+.backups__facts dt { color: var(--muted); }
+.backups__facts dd { margin: 0; }
 .schedule__shortcuts .btn { padding: 7px 12px; font-size: .88rem; }
 .schedule { grid-template-columns: minmax(0, 1fr); }
 .week__day--short { display: none; }

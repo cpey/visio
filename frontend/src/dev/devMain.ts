@@ -63,6 +63,7 @@ let config: VisioConfig = {
     "camera.backyard": { mode: "placeholder", placeholder_text: "View in Aosu app" },
   },
   layouts: { default: { name: "Cameras", columns: 2, domains: ["camera"] }, blinds: { name: "Blinds", domains: ["cover"] } },
+  backups: { copy_dir: "/media/ha-backups" },
   blinds: {
     mode: "auto",
     schedules: [
@@ -127,6 +128,22 @@ function makeHass(): Hass {
               ] },
             ],
           } as T;
+        case "visio/backups/status": {
+          const dir = config.backups?.copy_dir ?? "";
+          const hour = 3600_000;
+          return {
+            level: "ok",
+            problems: [],
+            schedule: { recurrence: "daily", days: [], time: "04:45", locations: ["This system"], keep_copies: 7, keep_days: null },
+            next: new Date(Date.now() + 15 * hour).toISOString(),
+            last_success: new Date(Date.now() - 9 * hour).toISOString(),
+            last_attempt: new Date(Date.now() - 9 * hour).toISOString(),
+            copy_dir: dir,
+            copy: dir
+              ? { count: 7, total_bytes: 412e6, newest_name: "a.tar", newest_time: new Date(Date.now() - 9 * hour).toISOString(), free_bytes: 231e9, disk_bytes: 240e9 }
+              : null,
+          } as T;
+        }
         case "visio/reconnect":
           setTimeout(() => {
             blindsDown = false;

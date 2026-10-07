@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getVersion } from "../api/config";
+import { BackupStatus } from "./BackupStatus";
 import { checkForUpdates, getUpdatesStatus, runUpdates } from "../api/updates";
 import { DAYS, type Day, type Hass, type UpdateItem, type UpdatesConfig, type UpdatesStatus, type VisioConfig } from "../types";
 
@@ -163,6 +164,8 @@ export function SystemSettings({ hass, draft, setDraft }: Props) {
           {reconnecting || restartExpected ? "Restarting…" : "Restart Home Assistant"}
         </button>
       </div>
+
+      <BackupStatus hass={hass} draft={draft} setDraft={setDraft} />
 
       <div className="schedules__head">
         <div>

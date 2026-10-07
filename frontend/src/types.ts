@@ -86,11 +86,42 @@ export interface UpdatesConfig {
   backup: boolean;
 }
 
+export interface BackupsConfig {
+  /** Folder on a second disk that backups are copied to ("" = none). */
+  copy_dir: string;
+}
+
 export interface VisioConfig {
   entities: Record<string, EntityProfile>;
   layouts: Record<string, Layout>;
   blinds?: BlindsConfig;
   updates?: UpdatesConfig;
+  backups?: BackupsConfig;
+}
+
+export interface BackupsStatus {
+  level: "ok" | "warning" | "off";
+  problems: string[];
+  schedule: {
+    recurrence: "never" | "daily" | "custom_days" | null;
+    days: Day[] | null;
+    time: string | null;
+    locations: string[] | null;
+    keep_copies: number | null;
+    keep_days: number | null;
+  };
+  next: string | null;
+  last_success: string | null;
+  last_attempt: string | null;
+  copy_dir: string;
+  copy: {
+    count: number;
+    total_bytes: number;
+    newest_name: string | null;
+    newest_time: string | null;
+    free_bytes: number;
+    disk_bytes: number;
+  } | null;
 }
 
 export interface UpdateItem {
