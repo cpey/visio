@@ -111,6 +111,20 @@ the VM controls the same real devices as the production server; manual controls 
 - Never commit secrets (`secrets.yaml`, `.env`, tokens), build output, `.tools/`, `.venv/` or `.vm/`.
 - Do not `git push` unless explicitly asked.
 
+## Development and release workflow
+
+1. **Develop:** change code, run the tests, then `scripts/deploy-dev.sh` to try it in the dev VM
+   (version `<last tag>-dev+<commit>`; dev builds never run blind schedules or scheduled updates).
+   Never install Visio updates through HACS inside the VM: that replaces the dev build.
+2. **Push** (the user pushes; Claude is denied `git push`): the notes submodule first, then this
+   repo, so the submodule pointer never references an unpushed commit:
+   `git -C docs/local push origin main && git push origin main`. Pushing `main` runs CI only.
+3. **Release:** `git tag vX.Y.Z && git push origin vX.Y.Z` (semver, next after
+   `git tag --sort=-v:refname | head -1`). CI tests, builds, stamps the version into
+   `manifest.json` and publishes `visio.zip` as a GitHub release; HACS only sees tagged releases.
+4. **Install on the production server:** Visio → Settings → System → Check for updates →
+   Update (Home Assistant restarts; the page reconnects). HACS also finds it on its own.
+
 ## Public and private repos
 
 - `cpey/visio` (this repo) is **public** (HACS requires it): code, README and this file
