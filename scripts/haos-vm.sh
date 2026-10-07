@@ -36,7 +36,20 @@ case "${1:-}" in
     echo "Created $NAME. Open http://localhost:8123 in a few minutes."
     ;;
   start) virsh start "$NAME" ;;
-  stop) virsh shutdown "$NAME" ;;
+  stop)
+    # Clean ACPI shutdown: HAOS stops add-ons and Core first, which takes 1-3 minutes.
+    if [ "$(virsh domstate "$NAME")" = "shut off" ]; then echo "Already stopped."; exit 0; fi
+    virsh shutdown "$NAME" >/dev/null
+    printf 'Shutting down %s' "$NAME"
+    for _ in $(seq 150); do
+      if [ "$(virsh domstate "$NAME")" = "shut off" ]; then echo; echo "Stopped."; exit 0; fi
+      printf '.'
+      sleep 2
+    done
+    echo
+    echo "Still shutting down after 5 minutes. To force it off: virsh -c $CONN destroy $NAME" >&2
+    exit 1
+    ;;
   status) virsh domstate "$NAME" ;;
   console) virsh console "$NAME" ;;   # login: root (no password) -> HA CLI; exit with Ctrl+]
   destroy)
