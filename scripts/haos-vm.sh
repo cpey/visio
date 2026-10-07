@@ -3,7 +3,13 @@
 # HA is forwarded to http://localhost:8123 (HAOS >= 2026.9 serves the UI on guest port 80;
 # guest port 8123 only redirects to 80).
 #
-# Usage: scripts/haos-vm.sh create [version] | start | stop | status | console | destroy
+# Usage: scripts/haos-vm.sh create [version] | start [--offline] | stop | status | console | destroy
+#                           | offline | online
+#
+# The VM is a copy of the real house (same Tailscale identity, integrations, ...).
+# `start --offline` boots it with its network link already down, so nothing connects
+# before you've cleaned it up from the console; `online` / `offline` switch the link.
+# While offline, http://localhost:8123 is unreachable too (it goes over the same link).
 set -euo pipefail
 
 NAME=visio-haos
@@ -13,6 +19,8 @@ VM_DIR="$ROOT/.vm"
 DISK="$VM_DIR/haos.qcow2"
 VARS="$VM_DIR/haos_VARS.fd"
 virsh() { command virsh -c "$CONN" "$@"; }
+# The guest NIC's backend is the QEMU netdev "hn0" (see --qemu-commandline in create).
+set_link() { virsh qemu-monitor-command "$NAME" --hmp "set_link hn0 $1" >/dev/null; }
 
 case "${1:-}" in
   create)
@@ -35,7 +43,23 @@ case "${1:-}" in
       --graphics none --noautoconsole
     echo "Created $NAME. Open http://localhost:8123 in a few minutes."
     ;;
-  start) virsh start "$NAME" ;;
+  start)
+    if [ "${2:-}" = "--offline" ]; then
+      # Start paused so the guest can't send a single packet before the link is down.
+      virsh start --paused "$NAME" >/dev/null
+      if ! set_link off; then
+        virsh destroy "$NAME" >/dev/null
+        echo "Couldn't cut the network; VM stopped again." >&2
+        exit 1
+      fi
+      virsh resume "$NAME" >/dev/null
+      echo "Started $NAME offline. Use: $0 console   then: $0 online"
+    else
+      virsh start "$NAME"
+    fi
+    ;;
+  offline) set_link off && echo "Network link down." ;;
+  online) set_link on && echo "Network link up (http://localhost:8123 in a moment)." ;;
   stop)
     # Clean ACPI shutdown: HAOS stops add-ons and Core first, which takes 1-3 minutes.
     if [ "$(virsh domstate "$NAME")" = "shut off" ]; then echo "Already stopped."; exit 0; fi
@@ -57,5 +81,5 @@ case "${1:-}" in
     virsh undefine "$NAME" --nvram
     echo "VM removed; disk kept in $VM_DIR (delete manually if wanted)."
     ;;
-  *) sed -n '2,7p' "$0"; exit 1 ;;
+  *) sed -n '2,12p' "$0"; exit 1 ;;
 esac

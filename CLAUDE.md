@@ -85,12 +85,17 @@ PLAYWRIGHT_BROWSERS_PATH=../.tools/ms-playwright node scripts/screenshot.mjs htt
 
 Local HA VM: `scripts/haos-vm.sh create|start|stop|status|console` (libvirt **user session**,
 disk in `.vm/`, UI at http://localhost:8123 → guest port 80; HAOS ≥ 2026.9 serves the UI on port 80).
+`start --offline` boots it with the network link already down (`online`/`offline` toggle it):
+use it whenever the VM may still hold a copy of the real house (e.g. after restoring a production
+backup), and clean it up from the console before going online.
 Networking is QEMU user-mode NAT (the host is on Wi-Fi, which can't be bridged): the VM reaches the LAN
 and internet, but LAN devices can't reach the VM directly — use Tailscale for other devices.
 
 Dev loop against real HA: `scripts/deploy-dev.sh` builds the panel, installs
 `custom_components/visio` into the VM through its root console (VM fetches from the host at
 `10.0.2.2`) and restarts HA Core. Then reload the "Visio" sidebar panel.
+Dev builds (version `<tag>-dev+<sha>`) never run blind schedules or scheduled updates, because
+the VM controls the same real devices as the production server; manual controls still work.
 
 ## Conventions
 
