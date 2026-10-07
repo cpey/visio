@@ -34,9 +34,12 @@ NOTIFICATION_ID = "visio_updates"
 
 
 class UpdateManager:
-    def __init__(self, hass: HomeAssistant, get_config: Callable[[], dict[str, Any]]) -> None:
+    def __init__(
+        self, hass: HomeAssistant, get_config: Callable[[], dict[str, Any]], scheduled: bool = True
+    ) -> None:
         self._hass = hass
         self._get_config = get_config
+        self._scheduled = scheduled  # False on dev builds: only "Update now" installs
         self._store: Store[dict[str, Any]] = Store(hass, 1, STATE_KEY)
         self._state: dict[str, Any] = {"history": [], "pending": None}
         self._running = False
@@ -68,7 +71,10 @@ class UpdateManager:
 
     @callback
     def async_start(self) -> None:
-        self._unsubs.append(async_track_time_change(self._hass, self._tick, second=0))
+        if self._scheduled:
+            self._unsubs.append(async_track_time_change(self._hass, self._tick, second=0))
+        else:
+            _LOGGER.info("Development build: scheduled updates don't run")
         interrupted = any(e.get("run_open") for e in self._state.get("history", []))
         if self._state.get("pending") or interrupted:
             if self._hass.state is CoreState.running:

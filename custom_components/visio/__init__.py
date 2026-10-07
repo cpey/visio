@@ -21,6 +21,7 @@ from .watchdog import IntegrationWatchdog
 from .const import (
     APP_FILES_URL,
     DOMAIN,
+    is_dev_build,
     PANEL_ICON,
     PANEL_JS,
     PANEL_TITLE,
@@ -64,15 +65,17 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     store = VisioStore(hass)
     await store.async_load()
+    version = await hass.async_add_executor_job(_version)
+    # Dev builds share the house's devices with the real server: nothing runs on a timer.
+    automatic = not is_dev_build(version)
     # Reads the store on every tick, so saved schedule changes apply immediately.
-    scheduler = BlindScheduler(hass, lambda: store.config)
+    scheduler = BlindScheduler(hass, lambda: store.config, enabled=automatic)
     scheduler.async_start()
-    updates = UpdateManager(hass, lambda: store.config)
+    updates = UpdateManager(hass, lambda: store.config, scheduled=automatic)
     await updates.async_load()
     updates.async_start()
     watchdog = IntegrationWatchdog(hass)
     watchdog.async_start()
-    version = await hass.async_add_executor_job(_version)
     hass.data[DOMAIN] = {
         "store": store,
         "scheduler": scheduler,

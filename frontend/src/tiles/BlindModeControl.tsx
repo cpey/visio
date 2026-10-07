@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { setBlindMode } from "../api/config";
+import { useEffect, useState } from "react";
+import { getVersion, setBlindMode } from "../api/config";
 import { useNow } from "../lib/hooks";
 import { describeNext, nextAction } from "../lib/schedule";
 import type { BlindMode } from "../types";
@@ -14,6 +14,11 @@ const MODES: { id: BlindMode; label: string }[] = [
 export function BlindModeControl({ hass, config, onConfig }: SectionControlProps) {
   const now = useNow(30000);
   const [error, setError] = useState<string | null>(null);
+  // Dev builds (development VM) never run schedules, whatever the mode says.
+  const [devBuild, setDevBuild] = useState(false);
+  useEffect(() => {
+    getVersion(hass).then((v) => setDevBuild(!!v?.includes("-dev")));
+  }, []);
   const blinds = config.blinds ?? { mode: "manual", schedules: [] };
   if (!blinds.schedules.length) return null; // nothing to automate yet
 
@@ -31,7 +36,15 @@ export function BlindModeControl({ hass, config, onConfig }: SectionControlProps
   return (
     <div className="mode-control">
       <span className="mode-control__hint">
-        {error ? `⚠ ${error}` : blinds.mode === "manual" ? "Schedules paused" : next ? describeNext(next) : "No upcoming action"}
+        {error
+          ? `⚠ ${error}`
+          : blinds.mode === "manual"
+            ? "Schedules paused"
+            : devBuild
+              ? "Development build: schedules don't run"
+              : next
+                ? describeNext(next)
+                : "No upcoming action"}
       </span>
       <div className="segmented segmented--compact" role="radiogroup" aria-label="Blinds mode">
         {MODES.map((m) => (

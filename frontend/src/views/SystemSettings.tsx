@@ -206,7 +206,11 @@ export function SystemSettings({ hass, draft, setDraft }: Props) {
               <input type="time" value={updates.time} onChange={(e) => e.target.value && set({ time: e.target.value })} />
             </span>
           </label>
-        ) : (
+        ) : null}
+        {updates.mode === "weekly" && loadedVersion?.includes("-dev") && (
+          <p className="schedules__paused">Development build: scheduled updates don't run. Use “Update” below.</p>
+        )}
+        {updates.mode === "weekly" ? null : (
           <p className="hint">Manual: nothing updates on its own. Use “Update” below when you're ready.</p>
         )}
         <label className="field field--bool">

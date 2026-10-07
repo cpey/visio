@@ -17,3 +17,12 @@ APP_HTML = "visio-app.html"
 
 STORAGE_KEY = DOMAIN
 STORAGE_VERSION = 1
+
+
+def is_dev_build(version: str) -> bool:
+    """Development deploy (scripts/deploy-dev.sh stamps "<tag>-dev+<sha>").
+
+    Dev builds run in the development VM next to the real house, so they never move
+    blinds or install updates on their own (manual buttons still work).
+    """
+    return "-dev" in version

@@ -23,13 +23,19 @@ COMMAND_GAP_S = 0.3
 class BlindScheduler:
     """Checks every minute (local time, DST-aware) which schedule actions are due."""
 
-    def __init__(self, hass: HomeAssistant, get_config: Callable[[], dict[str, Any]]) -> None:
+    def __init__(
+        self, hass: HomeAssistant, get_config: Callable[[], dict[str, Any]], enabled: bool = True
+    ) -> None:
         self._hass = hass
         self._get_config = get_config
+        self._enabled = enabled
         self._unsub: Callable[[], None] | None = None
 
     @callback
     def async_start(self) -> None:
+        if not self._enabled:
+            _LOGGER.info("Development build: blind schedules don't run")
+            return
         self._unsub = async_track_time_change(self._hass, self._tick, second=0)
 
     @callback
