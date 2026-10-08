@@ -12,7 +12,7 @@ try:  # HA >= 2026.x replaced voluptuous with probatio
 except ImportError:  # pragma: no cover
     import voluptuous as vol
 
-from .backups import async_backup_status
+from .backups import backup_status
 from .const import DOMAIN
 from .schema import BLIND_MODES, ConfigError
 
@@ -157,16 +157,15 @@ async def ws_updates_check(
 
 @websocket_api.websocket_command({vol.Required("type"): "visio/backups/status"})
 @websocket_api.require_admin
-@websocket_api.async_response
-async def ws_backups_status(
+@callback
+def ws_backups_status(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
 ) -> None:
-    """Whether automatic backups run, where they go, and the state of the copy disk."""
+    """Whether automatic backups run, where they go, and when the last one finished."""
     if DOMAIN not in hass.data:
         connection.send_error(msg["id"], "not_loaded", "Visio is not set up")
         return
-    store = _store(hass)
-    connection.send_result(msg["id"], await async_backup_status(hass, lambda: store.config))
+    connection.send_result(msg["id"], backup_status(hass))
 
 
 @callback

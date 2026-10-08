@@ -9,8 +9,7 @@ Document shape:
       "blinds":   {"mode": "auto"|"manual",
                    "schedules": [{"id", "name", "enabled", "entities": [cover ids],
                                   "days": {"mon": {"open": "07:30", "close": "21:00"}, ...}}]},
-      "updates":  {"mode": "manual"|"weekly", "day", "time", "backup"},
-      "backups":  {"copy_dir": "" | "/media/<folder>"}
+      "updates":  {"mode": "manual"|"weekly", "day", "time", "backup"}
     }
 """
 
@@ -37,8 +36,8 @@ BLIND_MODES = ("auto", "manual")
 UPDATE_MODES = ("manual", "weekly")
 DAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")  # index = datetime.weekday()
 TIME_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
-# Where backups are copied to (a second disk); only folders HA exposes for files.
-COPY_DIR_RE = re.compile(r"^/(media|share)(/[A-Za-z0-9._ -]+)+$")
+# Top-level sections from earlier builds that are accepted and dropped.
+LEGACY_SECTIONS = {"backups"}  # backup disk folder, only in unreleased dev builds
 
 
 class ConfigError(ValueError):
@@ -57,8 +56,6 @@ def default_config() -> dict[str, Any]:
         "blinds": {"mode": "manual", "schedules": []},
         # Manual by default: nothing updates until someone picks a weekly slot.
         "updates": {"mode": "manual", "day": "sun", "time": "04:00", "backup": True},
-        # Empty: no backup disk to check.
-        "backups": {"copy_dir": ""},
     }
 
 
@@ -231,23 +228,12 @@ def _updates(value: Any, field: str) -> dict[str, Any]:
     return {**default_config()["updates"], **clean}
 
 
-def _copy_dir(value: Any, field: str) -> str:
-    value = _text(value, field).rstrip("/")
-    if value and (not COPY_DIR_RE.match(value) or ".." in value.split("/")):
-        raise ConfigError(f"{field} must be a folder under /media or /share")
-    return value
-
-
-def _backups(value: Any, field: str) -> dict[str, Any]:
-    clean = _object(value, {"copy_dir": _copy_dir}, field)
-    return {**default_config()["backups"], **clean}
-
-
 def validate_config(data: Any) -> dict[str, Any]:
     """Validate a full configuration document and return a clean copy."""
     if not isinstance(data, dict):
         raise ConfigError("config must be an object")
-    unknown = set(data) - {"entities", "layouts", "blinds", "updates", "backups"}
+    data = {k: v for k, v in data.items() if k not in LEGACY_SECTIONS}
+    unknown = set(data) - {"entities", "layouts", "blinds", "updates"}
     if unknown:
         raise ConfigError(f"unknown top-level fields: {', '.join(sorted(unknown))}")
 
@@ -274,5 +260,4 @@ def validate_config(data: Any) -> dict[str, Any]:
         "layouts": clean_layouts,
         "blinds": _blinds(data.get("blinds", {}), "blinds"),
         "updates": _updates(data.get("updates", {}), "updates"),
-        "backups": _backups(data.get("backups", {}), "backups"),
     }

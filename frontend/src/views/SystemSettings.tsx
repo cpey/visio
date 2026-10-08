@@ -165,7 +165,7 @@ export function SystemSettings({ hass, draft, setDraft }: Props) {
         </button>
       </div>
 
-      <BackupStatus hass={hass} draft={draft} setDraft={setDraft} />
+      <BackupStatus hass={hass} />
 
       <div className="schedules__head">
         <div>

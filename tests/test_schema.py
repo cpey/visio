@@ -45,7 +45,6 @@ def test_full_profile_roundtrip():
             ],
         },
         "updates": {"mode": "weekly", "day": "sat", "time": "03:30", "backup": False},
-        "backups": {"copy_dir": "/media/ha-backups"},
     }
     assert schema.validate_config(config) == config
 
@@ -95,10 +94,6 @@ def test_empty_layouts_get_default():
         {"updates": {"day": "someday"}},
         {"updates": {"time": "4am"}},
         {"updates": {"reboot_host": True}},
-        {"backups": {"copy_dir": "/config"}},
-        {"backups": {"copy_dir": "/media/../config"}},
-        {"backups": {"copy_dir": "media/ha-backups"}},
-        {"backups": {"extra": 1}},
         {"blinds": {"extra": 1}},
         {"blinds": {"schedules": [{"name": "no id"}]}},
         {"blinds": {"schedules": [{"id": "a"}, {"id": "a"}]}},
@@ -114,7 +109,8 @@ def test_invalid_configs_rejected(config):
         schema.validate_config(config)
 
 
-def test_backup_copy_dir_defaults_empty_and_accepts_media_folders():
-    assert schema.validate_config({})["backups"] == {"copy_dir": ""}
-    clean = schema.validate_config({"backups": {"copy_dir": "/media/ha-backups/"}})
-    assert clean["backups"]["copy_dir"] == "/media/ha-backups"
+
+def test_legacy_backups_section_is_dropped_not_rejected():
+    # Stored by unreleased dev builds; rejecting it would reset the whole config.
+    clean = schema.validate_config({"backups": {"copy_dir": "/media/ha-backups"}})
+    assert "backups" not in clean

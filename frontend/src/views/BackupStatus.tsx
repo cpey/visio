@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getBackupsStatus } from "../api/backups";
-import type { BackupsStatus, Day, Hass, VisioConfig } from "../types";
+import type { BackupsStatus, Day, Hass } from "../types";
 
 const SHORT_DAYS: Record<Day, string> = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
 const LEVEL = {
@@ -11,18 +11,11 @@ const LEVEL = {
 
 interface Props {
   hass: Hass;
-  draft: VisioConfig;
-  setDraft(update: (draft: VisioConfig) => VisioConfig): void;
 }
 
 function when(iso: string | null): string {
   if (!iso) return "never";
   return new Date(iso).toLocaleString([], { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-}
-
-function size(bytes: number): string {
-  if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(1)} GB`;
-  return `${Math.max(1, Math.round(bytes / 1e6))} MB`;
 }
 
 function schedule(s: BackupsStatus["schedule"]): string {
@@ -39,11 +32,10 @@ function keeps(s: BackupsStatus["schedule"]): string | null {
   return null;
 }
 
-/** Settings → System → Backups: whether Home Assistant's automatic backups run, and the copy disk. */
-export function BackupStatus({ hass, draft, setDraft }: Props) {
+/** Settings → System → Backups: whether Home Assistant's automatic backups run, and where to. */
+export function BackupStatus({ hass }: Props) {
   const [status, setStatus] = useState<BackupsStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const copyDir = draft.backups?.copy_dir ?? "";
 
   const load = () =>
     getBackupsStatus(hass)
@@ -53,13 +45,12 @@ export function BackupStatus({ hass, draft, setDraft }: Props) {
       })
       .catch((err) => setError((err as Error)?.message ?? "Could not load the backup status"));
 
-  // On open; "Check again" after saving a new disk folder.
+  // On open; "Check again" refreshes after a backup.
   useEffect(() => {
     load();
   }, []);
 
   const level = status ? LEVEL[status.level] : null;
-  const copy = status?.copy;
   const keep = status ? keeps(status.schedule) : null;
 
   return (
@@ -69,7 +60,7 @@ export function BackupStatus({ hass, draft, setDraft }: Props) {
           <h2 className="schedules__title">Backups</h2>
           <p className="hint">
             Home Assistant makes the backups (Settings → System → Backups in Home Assistant). This shows whether they're
-            running and reaching the backup disk.
+            running and where they're saved.
           </p>
         </div>
         <div className="system__actions">
@@ -111,31 +102,9 @@ export function BackupStatus({ hass, draft, setDraft }: Props) {
                   <dd>{when(status.next)}</dd>
                 </>
               )}
-              {status.copy_dir && (
-                <>
-                  <dt>Backup disk</dt>
-                  <dd>
-                    {copy
-                      ? `${copy.count} backup${copy.count === 1 ? "" : "s"} (${size(copy.total_bytes)}), newest ${when(
-                          copy.newest_time,
-                        )} · ${size(copy.free_bytes)} free of ${size(copy.disk_bytes)}`
-                      : "not found"}
-                  </dd>
-                </>
-              )}
             </dl>
           </>
         )}
-        <label className="field">
-          <span className="field__label">Backup disk folder</span>
-          <input
-            type="text"
-            placeholder="/media/ha-backups (empty = no disk)"
-            value={copyDir}
-            onChange={(e) => setDraft((d) => ({ ...d, backups: { copy_dir: e.target.value.trim() } }))}
-          />
-        </label>
-        <p className="hint">Folder on the second disk that backups are copied to. Save to apply.</p>
       </div>
     </>
   );
