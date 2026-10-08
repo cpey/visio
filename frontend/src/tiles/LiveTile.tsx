@@ -112,7 +112,7 @@ export function LiveTile(props: TileProps) {
       </div>
       {!live &&
         (fallback === "snapshot" ? (
-          <SnapshotTile {...props} />
+          <SnapshotTile {...props} note={error ? (/live/i.test(error) ? error : `Live: ${error}`) : undefined} />
         ) : fallback === "placeholder" ? (
           <PlaceholderTile {...props} />
         ) : (

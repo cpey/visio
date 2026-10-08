@@ -6,8 +6,11 @@ import { CAMERA_DEFAULTS } from "../lib/resolve";
 import { TileFrame } from "./TileFrame";
 import type { TileProps } from "./types";
 
-/** Polls the HA camera proxy; the new image replaces the old one only once loaded. */
-export function SnapshotTile({ hass, tile }: TileProps) {
+/**
+ * Polls the HA camera proxy; the new image replaces the old one only once loaded.
+ * `note`: why a live tile fell back to snapshots, shown in the status line.
+ */
+export function SnapshotTile({ hass, tile, note }: TileProps & { note?: string }) {
   const interval = tile.profile.interval ?? CAMERA_DEFAULTS.interval;
   const visible = usePageVisible();
   const now = useNow();
@@ -68,7 +71,12 @@ export function SnapshotTile({ hass, tile }: TileProps) {
       hass={hass}
       tile={tile}
       stale={stale}
-      status={error ? `⚠ ${error} · ${formatAge(updatedAt, now)}` : formatAge(updatedAt, now)}
+      status={
+        <span title={note}>
+          {note ? `⚠ ${note} · ` : ""}
+          {error ? `⚠ ${error} · ${formatAge(updatedAt, now)}` : formatAge(updatedAt, now)}
+        </span>
+      }
     >
       {src ? <img src={src} alt={tile.name} /> : <div className="tile__empty">Loading…</div>}
     </TileFrame>
