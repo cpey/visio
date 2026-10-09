@@ -24,3 +24,6 @@ secrets.yaml
 
 # Claude Code personal settings
 .claude/settings.local.json
+
+# Editor tag index (ctags)
+tags
