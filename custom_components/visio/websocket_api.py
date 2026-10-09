@@ -13,6 +13,7 @@ except ImportError:  # pragma: no cover
     import voluptuous as vol
 
 from .backups import backup_status
+from .blinds_plan import COMMANDS
 from .const import DOMAIN
 from .schema import BLIND_MODES, ConfigError
 
@@ -168,8 +169,53 @@ def ws_backups_status(
     connection.send_result(msg["id"], backup_status(hass))
 
 
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "visio/blinds/move",
+        vol.Required("entity_ids"): list,
+        vol.Required("command"): str,
+        vol.Optional("position"): int,
+    }
+)
+@callback
+def ws_blinds_move(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Queue a blind command (any household user, like the cover services themselves)."""
+    if DOMAIN not in hass.data:
+        connection.send_error(msg["id"], "not_loaded", "Visio is not set up")
+        return
+    ids = msg["entity_ids"]
+    if not ids or not all(isinstance(e, str) and e.startswith("cover.") for e in ids):
+        connection.send_error(msg["id"], "invalid", "entity_ids must be cover entities")
+        return
+    if msg["command"] not in COMMANDS:
+        connection.send_error(msg["id"], "invalid", f"command must be one of {COMMANDS}")
+        return
+    try:
+        hass.data[DOMAIN]["blinds"].async_move(ids, msg["command"], msg.get("position"), source="panel")
+    except ValueError as err:
+        connection.send_error(msg["id"], "invalid", str(err))
+        return
+    connection.send_result(msg["id"], hass.data[DOMAIN]["blinds"].status())
+
+
+@websocket_api.websocket_command({vol.Required("type"): "visio/blinds/status"})
+@callback
+def ws_blinds_status(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Blinds waiting to be sent or checked, and those that didn't respond."""
+    if DOMAIN not in hass.data:
+        connection.send_error(msg["id"], "not_loaded", "Visio is not set up")
+        return
+    connection.send_result(msg["id"], hass.data[DOMAIN]["blinds"].status())
+
+
 @callback
 def async_register(hass: HomeAssistant) -> None:
+    websocket_api.async_register_command(hass, ws_blinds_move)
+    websocket_api.async_register_command(hass, ws_blinds_status)
     websocket_api.async_register_command(hass, ws_backups_status)
     websocket_api.async_register_command(hass, ws_updates_check)
     websocket_api.async_register_command(hass, ws_reconnect)

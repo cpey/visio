@@ -9,5 +9,25 @@
     "abort": {
       "single_instance_allowed": "Visio is already configured."
     }
+  },
+  "services": {
+    "move_blinds": {
+      "name": "Move blinds",
+      "description": "Move blinds one at a time (some hubs drop simultaneous commands). After about 75 s, Visio checks each blind and sends the command once more to any that didn't move.",
+      "fields": {
+        "entity_id": {
+          "name": "Blinds",
+          "description": "The blinds to move, in this order."
+        },
+        "command": {
+          "name": "Command",
+          "description": "open, close, or set_position."
+        },
+        "position": {
+          "name": "Position",
+          "description": "For set_position: 0 = closed, 100 = open."
+        }
+      }
+    }
   }
 }

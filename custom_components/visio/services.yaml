@@ -1,0 +1,23 @@
+move_blinds:
+  fields:
+    entity_id:
+      required: true
+      selector:
+        entity:
+          domain: cover
+          multiple: true
+    command:
+      required: true
+      selector:
+        select:
+          options:
+            - open
+            - close
+            - set_position
+    position:
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"

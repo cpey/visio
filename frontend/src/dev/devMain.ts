@@ -55,6 +55,11 @@ const states: Record<string, HassEntity> = {
 let restartUntil = 0;
 // ?down=1 simulates unresponsive blinds until "Reconnect" (visio/reconnect).
 let blindsDown = new URLSearchParams(location.search).get("down") === "1";
+// ?stuck=1: the kitchen blind "didn't move" (Visio's resend also failed).
+let blindQueue: { pending: string[]; not_responding: Record<string, string> } = {
+  pending: [],
+  not_responding: new URLSearchParams(location.search).get("stuck") === "1" ? { "cover.kitchen_blind": new Date().toISOString() } : {},
+};
 
 let config: VisioConfig = {
   entities: {
@@ -155,6 +160,17 @@ function makeHass(): Hass {
           return structuredClone(config) as T;
         case "camera/capabilities":
           return { frontend_stream_types: [] } as T;
+        case "visio/blinds/move": {
+          // Moves at once; the real queue sends one at a time and checks after ~75 s.
+          const ids = msg.entity_ids as string[];
+          const service = { open: "open_cover", close: "close_cover", set_position: "set_cover_position" }[msg.command as string];
+          await makeHass().callWS({ type: "call_service", domain: "cover", service, target: { entity_id: ids }, service_data: { position: msg.position } });
+          blindQueue = { pending: ids, not_responding: {} };
+          setTimeout(() => (blindQueue = { ...blindQueue, pending: [] }), 6000);
+          return structuredClone(blindQueue) as T;
+        }
+        case "visio/blinds/status":
+          return structuredClone(blindQueue) as T;
         case "call_service": {
           // Minimal cover simulation for the dev server.
           const target = (msg.target as { entity_id: string | string[] }).entity_id;
