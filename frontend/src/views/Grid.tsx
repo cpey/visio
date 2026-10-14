@@ -100,7 +100,8 @@ export function Grid({ hass, layout, tiles, refreshing, onRefresh, onOpenMenu, m
                   selectAll={{
                     checked: allChosen,
                     indeterminate: chosen.length > 0 && !allChosen,
-                    onChange: (on) => setSelection(sectionIds, on),
+                    // Partly selected: the click clears the selection (the browser would tick all).
+                    onChange: () => setSelection(sectionIds, chosen.length === 0),
                   }}
                 />
               )}

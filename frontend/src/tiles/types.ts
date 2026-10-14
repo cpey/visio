@@ -41,8 +41,8 @@ export interface GroupControlProps {
   entityIds: string[];
   /** Every entity of this section (selected or not), e.g. to detect unresponsive devices. */
   allIds: string[];
-  /** "Select all" state for this section, rendered inside the control. */
-  selectAll: { checked: boolean; indeterminate: boolean; onChange(checked: boolean): void };
+  /** "Select all" for this section, rendered inside the control: selects all when none are selected, else clears. */
+  selectAll: { checked: boolean; indeterminate: boolean; onChange(): void };
 }
 
 export interface DomainDefinition {

@@ -121,7 +121,7 @@ export function CoverGroupControl({ hass, entityIds, allIds, selectAll }: GroupC
             ref={(el) => {
               if (el) el.indeterminate = selectAll.indeterminate;
             }}
-            onChange={(e) => selectAll.onChange(e.target.checked)}
+            onChange={() => selectAll.onChange()}
           />
           Select all
         </label>
