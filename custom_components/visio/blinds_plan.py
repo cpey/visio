@@ -11,7 +11,9 @@ from __future__ import annotations
 
 COMMANDS = ("open", "close", "set_position")
 SERVICES = {"open": "open_cover", "close": "close_cover", "set_position": "set_cover_position"}
-COMMAND_GAP_S = 0.3  # between commands, so the hub treats each as a separate task
+# Between commands, from the end of one send: the hub's single radio misses commands sent
+# closer than ~1.3 s (measured by the Norman integration's authors; their default is 1.6 s).
+COMMAND_GAP_S = 1.6
 VERIFY_AFTER_S = 75  # a full open/close takes ~40 s; the integration shows the target for up to 30 s
 TOLERANCE = 5  # percent
 MAX_ATTEMPTS = 2  # first send + one resend
