@@ -27,6 +27,14 @@ describe("discoverEntities", () => {
   it("only returns supported domains", () => {
     expect(discoverEntities(states).sort()).toEqual(["camera.a", "camera.b", "camera.c", "cover.blind"]);
   });
+  it("leaves out covers that move several blinds (room covers, cover groups)", () => {
+    const withGroups = {
+      ...states,
+      "cover.room": { ...entity("cover.room", "Shades"), attributes: { friendly_name: "Shades", member_count: 4 } },
+      "cover.group": { ...entity("cover.group"), attributes: { entity_id: ["cover.blind"] } },
+    };
+    expect(discoverEntities(withGroups).sort()).toEqual(["camera.a", "camera.b", "camera.c", "cover.blind"]);
+  });
 });
 
 describe("withDefaults", () => {

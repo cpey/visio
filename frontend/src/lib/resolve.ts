@@ -44,9 +44,24 @@ export function withDefaults(
   return { ...CAMERA_DEFAULTS, mode, ...profile };
 }
 
+/**
+ * A cover that moves several blinds at once: a Norman room cover (`member_count`) or a
+ * Home Assistant cover group (`entity_id` list). Left out of discovery: selected next to
+ * its own blinds, it moves blinds that weren't selected ("Select all" already does its job).
+ */
+export function isGroupCover(entity: HassEntity | undefined): boolean {
+  const attributes = entity?.attributes ?? {};
+  return attributes.member_count !== undefined || Array.isArray(attributes.entity_id);
+}
+
 export function discoverEntities(states: Record<string, HassEntity>, domains?: string[]): string[] {
   const allowed = domains?.length ? domains : DISCOVERED_DOMAINS;
-  return Object.keys(states).filter((id) => DISCOVERED_DOMAINS.includes(domainOf(id)) && allowed.includes(domainOf(id)));
+  return Object.keys(states).filter(
+    (id) =>
+      DISCOVERED_DOMAINS.includes(domainOf(id)) &&
+      allowed.includes(domainOf(id)) &&
+      !(domainOf(id) === "cover" && isGroupCover(states[id])),
+  );
 }
 
 export function pickLayout(config: VisioConfig, requested: string | null): [string, Layout] {
