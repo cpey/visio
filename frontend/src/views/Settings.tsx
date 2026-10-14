@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { EntityProfile, Hass, Layout, VisioConfig } from "../types";
-import { DISCOVERED_DOMAINS, discoverEntities, domainOf, withDefaults } from "../lib/resolve";
+import { DISCOVERED_DOMAINS, discoverEntities, domainOf, isGroupCover, withDefaults } from "../lib/resolve";
 import { COMMON_FIELDS, DOMAINS } from "../tiles/registry";
 import type { FieldSpec } from "../tiles/types";
 import { Icon } from "./icons";
@@ -152,7 +152,9 @@ export function Settings({ hass, config, onSave, onClose }: Props) {
   const [openRow, setOpenRow] = useState<string | null>(null);
 
   const entityIds = useMemo(() => {
-    const ids = new Set([...discoverEntities(hass.states), ...Object.keys(draft.entities)]);
+    // Saved profiles keep an entity listed (even if gone from HA), except room/group covers.
+    const saved = Object.keys(draft.entities).filter((id) => !isGroupCover(hass.states[id]));
+    const ids = new Set([...discoverEntities(hass.states), ...saved]);
     return [...ids].sort((a, b) =>
       (hass.states[a]?.attributes.friendly_name ?? a).localeCompare(hass.states[b]?.attributes.friendly_name ?? b),
     );
