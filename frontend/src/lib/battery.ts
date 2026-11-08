@@ -28,6 +28,15 @@ export function findBatteryEntity(
   return isBatterySensor(states[byName]) ? byName : undefined;
 }
 
+/**
+ * Battery sensors of the blinds among these tiles, without duplicates. Cameras are left
+ * out on purpose: forcing an update on theirs can wake battery devices or hit a vendor cloud.
+ */
+export function blindBatterySensors(tiles: { domain: string; battery?: string }[]): string[] {
+  const sensors = tiles.filter((t) => t.domain === "cover").map((t) => t.battery);
+  return [...new Set(sensors.filter((id): id is string => !!id))];
+}
+
 /** Battery percentage from a sensor state, or null if unknown. */
 export function batteryLevel(entity: HassEntity | undefined): number | null {
   const value = Number(entity?.state);

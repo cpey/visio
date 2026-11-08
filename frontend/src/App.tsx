@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { getConfig, getVersion, setConfig } from "./api/config";
 import { fetchEntityDevices } from "./api/registry";
+import { callService } from "./api/services";
+import { blindBatterySensors } from "./lib/battery";
 import { usePullToRefresh } from "./lib/pull";
-import { missingFromLayout, pickLayout, resolveTiles } from "./lib/resolve";
+import { missingFromLayout, pickLayout, type ResolvedTile, resolveTiles } from "./lib/resolve";
 import { PAGE_COLOR, useTheme } from "./lib/theme";
 import type { Hass, VisioConfig } from "./types";
 import { Drawer, type MenuItem } from "./views/Drawer";
@@ -37,6 +39,7 @@ export function App({ hass, menuItems = [], pageChrome = false }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const hassRef = useRef(hass);
   hassRef.current = hass;
+  const tilesRef = useRef<ResolvedTile[]>([]);
   const isAdmin = hass.user?.is_admin ?? false;
 
   const load = useCallback(async () => {
@@ -54,6 +57,12 @@ export function App({ hass, menuItems = [], pageChrome = false }: Props) {
   const refresh = useCallback(async () => {
     if (refreshing) return;
     setRefreshing(true);
+    // Ask HA to re-read the blinds' batteries. Not awaited: new values arrive through
+    // hass.states, and a failure here must not fail the refresh.
+    const batteries = blindBatterySensors(tilesRef.current);
+    if (batteries.length) {
+      callService(hassRef.current, "homeassistant", "update_entity", batteries).catch(() => {});
+    }
     try {
       // Keep the spinner up briefly so the refresh is visible even when instant.
       await Promise.all([load(), new Promise((r) => setTimeout(r, 600))]);
@@ -87,6 +96,7 @@ export function App({ hass, menuItems = [], pageChrome = false }: Props) {
     () => (config && layout ? resolveTiles(hass.states, config, layout, false, deviceOf) : []),
     [hass.states, config, layout, deviceOf],
   );
+  tilesRef.current = tiles;
 
   // Standalone app: the page itself (overscroll area, browser bar) follows the theme too.
   useEffect(() => {

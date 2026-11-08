@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { HassEntity } from "../types";
-import { batteryLevel, findBatteryEntity } from "./battery";
+import { batteryLevel, blindBatterySensors, findBatteryEntity } from "./battery";
 
 const e = (id: string, state = "", attributes: Record<string, unknown> = {}): HassEntity => ({
   entity_id: id,
@@ -37,6 +37,23 @@ describe("findBatteryEntity", () => {
   it("returns undefined when the device has none", () => {
     expect(findBatteryEntity("cover.blind", states, deviceOf)).toBeUndefined();
     expect(findBatteryEntity("camera.unknown", states, deviceOf)).toBeUndefined();
+  });
+});
+
+describe("blindBatterySensors", () => {
+  it("returns the blinds' sensors only, without duplicates or gaps", () => {
+    expect(
+      blindBatterySensors([
+        { domain: "camera", battery: "sensor.front_battery" },
+        { domain: "cover", battery: "sensor.shade_battery" },
+        { domain: "cover", battery: "sensor.shade_battery" },
+        { domain: "cover", battery: "sensor.other_battery" },
+        { domain: "cover" },
+      ]),
+    ).toEqual(["sensor.shade_battery", "sensor.other_battery"]);
+  });
+  it("is empty on a page without blinds", () => {
+    expect(blindBatterySensors([{ domain: "camera", battery: "sensor.front_battery" }])).toEqual([]);
   });
 });
 
